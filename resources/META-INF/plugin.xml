@@ -20,6 +20,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.pyscicomp.NumpyNamesService"
                         serviceImplementation="com.jetbrains.pyscicomp.NumpyNamesService"/>
+    <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.pyscicomp.NumpyUnknownReturnTypeInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
