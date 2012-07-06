@@ -1,0 +1,25 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.pyscicomp</id>
+  <name>Python Scientific Compuation</name>
+  <description>Support for Numpy library</description>
+  <version>1.0</version>
+  <depends>com.intellij.modules.python</depends>
+
+  <application-components>
+  </application-components>
+
+  <project-components>
+  </project-components>
+
+  <actions>
+    <action id="pscAction" class="com.jetbrains.pyscicomp.TestAction" text="PSC Test Action">
+      <add-to-group group-id="ToolsMenu" anchor="last" />
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <typeProvider implementation="com.jetbrains.pyscicomp.NumpyTypeProvider" />
+  </extensions>
+
+
+</idea-plugin>
