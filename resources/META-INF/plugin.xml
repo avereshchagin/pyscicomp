@@ -13,12 +13,17 @@
 
   <actions>
     <action id="pscAction" class="com.jetbrains.pyscicomp.TestAction" text="PSC Test Action">
-      <add-to-group group-id="ToolsMenu" anchor="last" />
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.pyscicomp.NumpyNamesService"
+                        serviceImplementation="com.jetbrains.pyscicomp.NumpyNamesService"/>
+  </extensions>
+
   <extensions defaultExtensionNs="Pythonid">
-    <typeProvider implementation="com.jetbrains.pyscicomp.NumpyTypeProvider" />
+    <typeProvider implementation="com.jetbrains.pyscicomp.NumpyTypeProvider"/>
   </extensions>
 
 
