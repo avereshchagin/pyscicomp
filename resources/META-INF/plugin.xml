@@ -5,6 +5,8 @@
   <version>1.0</version>
   <depends>com.intellij.modules.python</depends>
 
+  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
+
   <application-components>
   </application-components>
 
