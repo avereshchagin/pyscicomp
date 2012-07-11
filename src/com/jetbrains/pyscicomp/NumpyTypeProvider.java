@@ -21,8 +21,8 @@ public class NumpyTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
     if (function.isValid()) {
-      String qualifiedName = getQualifiedName(function, callSite);
-      if (qualifiedName.startsWith("numpy.")) {
+      String qualifiedName = Utils.getQualifiedName(function, callSite);
+      if (Utils.isNumpyFunction(function, callSite)) {
         NumpyNamesService namesService = NumpyNamesService.getInstance();
         String returnType = namesService.functionsToReturnTypes.get(qualifiedName);
         if (returnType != null) {
@@ -35,24 +35,5 @@ public class NumpyTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static String getQualifiedName(@NotNull PyFunction function, @Nullable PsiElement callSite) {
-    assert function.isValid();
-    List<String> result = new ArrayList<String>();
-    PyClass containingClass = function.getContainingClass();
-    VirtualFile virtualFile = function.getContainingFile().getVirtualFile();
-    if (virtualFile != null) {
-      String module = ResolveImportUtil.findShortestImportableName(callSite != null ? callSite : function, virtualFile);
-      if (module != null) {
-        result.add(module);
-      }
-    }
-    if (containingClass != null) {
-      result.add(containingClass.getName());
-    }
-    result.add(function.getName());
-    return StringUtil.join(result, ".");
   }
 }

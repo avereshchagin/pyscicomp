@@ -46,7 +46,7 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
               parameters.add(parameter.getName());
             }
             registerProblem(node, "Unknown return type",
-                            new AddTypeInformationFix(NumpyTypeProvider.getQualifiedName(function, referenceExpression), parameters));
+                            new AddTypeInformationFix(Utils.getQualifiedName(function, referenceExpression), parameters));
           }
         }
       }

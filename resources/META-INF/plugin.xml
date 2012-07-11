@@ -25,6 +25,7 @@
     <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.pyscicomp.NumpyUnknownReturnTypeInspection"/>
+    <lang.documentationProvider language="Python" order="first" implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
