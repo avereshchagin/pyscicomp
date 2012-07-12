@@ -75,12 +75,11 @@ public class NumpyDocString {
       Matcher matcher = ANY_INDENT.matcher(line);
       if (matcher.find() && matcher.groupCount() != 0) {
         String indent = matcher.group(1);
-        if (margin == null) {
+        if (margin == null || (margin.startsWith(indent) && margin.length() != indent.length())) {
+          // update margin
           margin = indent;
-        } else if (indent.startsWith(margin)) {
-        } else if (margin.startsWith(indent)) {
-          margin = indent;
-        } else {
+        } else if (!indent.startsWith(margin)) {
+          // lines have no common margin
           margin = "";
           break;
         }
@@ -104,8 +103,8 @@ public class NumpyDocString {
   }
 
   @NotNull
-  private static List<String> copyOfRange(@NotNull List<String> src, int start, int end) {
-    List<String> dest = new ArrayList<String>();
+  private static <T> List<T> copyOfRange(@NotNull List<T> src, int start, int end) {
+    List<T> dest = new ArrayList<T>();
     if (start < 0) {
       start = 0;
     }
