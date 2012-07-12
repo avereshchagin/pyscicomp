@@ -23,6 +23,7 @@ import java.util.List;
 
 public class NumpyDocumentationBuilder {
 
+  private String mySignature = null;
   private final List<DocStringParameter> myParameters = new ArrayList<DocStringParameter>();
   private final List<DocStringParameter> myReturns = new ArrayList<DocStringParameter>();
 
@@ -30,6 +31,10 @@ public class NumpyDocumentationBuilder {
 
   public NumpyDocumentationBuilder() {
 
+  }
+
+  public void setSignature(String signature) {
+    mySignature = signature;
   }
 
   public void addParameter(DocStringParameter parameter) {
@@ -81,6 +86,12 @@ public class NumpyDocumentationBuilder {
     myBuilder = new StringBuilder();
     myBuilder.append("<html><body>");
 
+    if (mySignature != null) {
+      subHeader("Signature");
+      startIndent();
+      myBuilder.append(StringUtil.escapeXml(mySignature));
+      stopIndent();
+    }
     buildParameterList(myParameters, "Parameters", "No parameters.");
     buildParameterList(myReturns, "Returns", "None.");
 

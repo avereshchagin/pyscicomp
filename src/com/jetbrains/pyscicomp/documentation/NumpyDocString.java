@@ -16,6 +16,7 @@
 package com.jetbrains.pyscicomp.documentation;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,34 +29,53 @@ public class NumpyDocString {
   private static final Pattern WHITESPACED_LINE = Pattern.compile("^[ \t]+$");
   private static final Pattern ANY_INDENT = Pattern.compile("(^[ \t]*)[^ \t\r\n]");
   private static final Pattern HAS_INDENT = Pattern.compile("(^[ \t]+)[^ \t\r\n]");
+  private static final Pattern SIGNATURE = Pattern.compile("^([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)$");
   private static final Pattern SECTION_HEADER = Pattern.compile("^[-=]+");
   private static final Pattern PARAMETER_WITH_TYPE = Pattern.compile("^(.+) : (.+)$");
+  private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
 
+  private final String mySignature;
   private final List<DocStringParameter> myParameters = new ArrayList<DocStringParameter>();
   private final List<DocStringParameter> myReturns = new ArrayList<DocStringParameter>();
 
-  private NumpyDocString(String text) {
-    List<String> lines = splitByLines(text);
-    deindent(lines);
-
-    // removing function signature
-    lines.remove(0);
-    deindent(lines);
-
+  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines) {
+    mySignature = signature;
     parseSections(lines);
   }
 
+  @Nullable
+  public String getSignature() {
+    return mySignature;
+  }
+
+  @NotNull
   public List<DocStringParameter> getParameters() {
     return myParameters;
   }
 
+  @NotNull
   public List<DocStringParameter> getReturns() {
     return myReturns;
   }
 
   @NotNull
   public static NumpyDocString parse(String text) {
-    return new NumpyDocString(text);
+    List<String> lines = splitByLines(text);
+    deindent(lines);
+
+    String signature = null;
+    if (SIGNATURE.matcher(lines.get(0)).matches()) {
+      signature = lines.get(0);
+      lines.remove(0);
+      deindent(lines);
+    }
+
+    String redirect = findRedirect(lines);
+    if (redirect != null) {
+      // TODO: support redirects
+    }
+
+    return new NumpyDocString(signature, lines);
   }
 
   @NotNull
@@ -115,6 +135,17 @@ public class NumpyDocString {
       dest.add(src.get(i));
     }
     return dest;
+  }
+
+  @Nullable
+  private static String findRedirect(@NotNull List<String> lines) {
+    for (String line : lines) {
+      Matcher matcher = REDIRECT.matcher(line);
+      if (matcher.matches() && matcher.groupCount() > 0) {
+        return matcher.group(1);
+      }
+    }
+    return null;
   }
 
   private void parseSections(@NotNull List<String> lines) {
