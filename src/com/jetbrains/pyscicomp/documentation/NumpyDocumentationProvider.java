@@ -17,9 +17,8 @@ package com.jetbrains.pyscicomp.documentation;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.pyscicomp.Utils;
+import com.jetbrains.pyscicomp.codeInsight.Utils;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyFunctionImpl;
 
 public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
@@ -29,8 +28,7 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
       PyFunction function = (PyFunction) element;
       if (Utils.isNumpyFunction(function, null)) {
         String docStringValue = function.getDocStringValue();
-        //PyFunction function1 = new PyFunctionImpl();
-        NumpyDocString docString = NumpyDocString.parse(docStringValue);
+        NumpyDocString docString = NumpyDocString.parse(docStringValue, originalElement);
         NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
         builder.setSignature(docString.getSignature());
         for (DocStringParameter parameter : docString.getParameters()) {

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pyscicomp;
+package com.jetbrains.pyscicomp.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.jetbrains.pyscicomp.codeInsight.NumpyNamesService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class AddTypeInformationDialog extends DialogWrapper {
+public class AddTypeInformationDialog extends DialogWrapper {
 
   private static final int TEXT_FIELD_WIDTH = 15;
   private static final String TITLE = "Add Type Information";

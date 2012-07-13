@@ -15,6 +15,15 @@
  */
 package com.jetbrains.pyscicomp.documentation;
 
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,19 +68,28 @@ public class NumpyDocString {
   }
 
   @NotNull
-  public static NumpyDocString parse(String text) {
+  public static NumpyDocString parse(String text, PsiElement reference) {
     List<String> lines = splitByLines(text);
-    deindent(lines);
+    dedent(lines);
 
     String signature = null;
     if (SIGNATURE.matcher(lines.get(0)).matches()) {
       signature = lines.get(0);
       lines.remove(0);
-      deindent(lines);
+      dedent(lines);
     }
 
     String redirect = findRedirect(lines);
     if (redirect != null) {
+      //List<PsiFileSystemItem> items = ResolveImportUtil.resolveModule(PyQualifiedName.fromDottedString("numpy"), reference.getContainingFile(),
+      //                                                        true, 0);
+      //PsiFileSystemItem item = items.get(0);
+      //PsiElement el = PyUtil.getPackageElement((PsiDirectory) item);
+      //Sdk sdk = PyBuiltinCache.findSdkForFile(reference.getContainingFile());
+      //VirtualFile file = sdk.getHomeDirectory().findChild("numpy");
+      //PyBuiltinCache cache = PyBuiltinCache.getInstance(reference);
+      //PsiElement element = cache.getByName("numpy");
+      //System.out.println(element);
       // TODO: support redirects
     }
 
@@ -89,7 +107,7 @@ public class NumpyDocString {
     return lines;
   }
 
-  private static void deindent(@NotNull List<String> lines) {
+  private static void dedent(@NotNull List<String> lines) {
     String margin = null;
     for (String line : lines) {
       Matcher matcher = ANY_INDENT.matcher(line);

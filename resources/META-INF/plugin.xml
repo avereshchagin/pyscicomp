@@ -20,16 +20,16 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.pyscicomp.NumpyNamesService"
-                        serviceImplementation="com.jetbrains.pyscicomp.NumpyNamesService"/>
+    <applicationService serviceInterface="com.jetbrains.pyscicomp.codeInsight.NumpyNamesService"
+                        serviceImplementation="com.jetbrains.pyscicomp.codeInsight.NumpyNamesService"/>
     <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.pyscicomp.NumpyUnknownReturnTypeInspection"/>
+                     implementationClass="com.jetbrains.pyscicomp.codeInsight.NumpyUnknownReturnTypeInspection"/>
     <lang.documentationProvider language="Python" order="first" implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <typeProvider implementation="com.jetbrains.pyscicomp.NumpyTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.pyscicomp.codeInsight.NumpyTypeProvider"/>
   </extensions>
 
 
