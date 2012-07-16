@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.jetbrains.pyscicomp.ui.AddTypeInformationDialog;
+import com.jetbrains.pyscicomp.ui.EditTypeInformationDialog;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.psi.*;
@@ -93,7 +93,7 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      new AddTypeInformationDialog(project, myFunction, myParameters).show();
+      new EditTypeInformationDialog(project, myFunction, myParameters).show();
     }
   }
 

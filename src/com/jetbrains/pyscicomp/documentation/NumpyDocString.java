@@ -81,15 +81,6 @@ public class NumpyDocString {
 
     String redirect = findRedirect(lines);
     if (redirect != null) {
-      //List<PsiFileSystemItem> items = ResolveImportUtil.resolveModule(PyQualifiedName.fromDottedString("numpy"), reference.getContainingFile(),
-      //                                                        true, 0);
-      //PsiFileSystemItem item = items.get(0);
-      //PsiElement el = PyUtil.getPackageElement((PsiDirectory) item);
-      //Sdk sdk = PyBuiltinCache.findSdkForFile(reference.getContainingFile());
-      //VirtualFile file = sdk.getHomeDirectory().findChild("numpy");
-      //PyBuiltinCache cache = PyBuiltinCache.getInstance(reference);
-      //PsiElement element = cache.getByName("numpy");
-      //System.out.println(element);
       // TODO: support redirects
     }
 

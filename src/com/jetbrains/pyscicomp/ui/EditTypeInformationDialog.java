@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AddTypeInformationDialog extends DialogWrapper {
+public class EditTypeInformationDialog extends DialogWrapper {
 
   private static final int TEXT_FIELD_WIDTH = 15;
-  private static final String TITLE = "Add Type Information";
+  private static final String TITLE = "Edit Type Information";
   private static final String FUNCTION_LABEL = "<html>Function: ";
   private static final String RETURN_TYPE_LABEL = "Return type: ";
 
@@ -39,7 +39,7 @@ public class AddTypeInformationDialog extends DialogWrapper {
   private final JTextField returnTypeTextField = new JTextField(TEXT_FIELD_WIDTH);
   private final Map<String, JTextField> parametersToTextFields = new HashMap<String, JTextField>();
 
-  public AddTypeInformationDialog(@Nullable Project project, @NotNull String functionName, @NotNull List<String> parameters) {
+  public EditTypeInformationDialog(@Nullable Project project, @NotNull String functionName, @NotNull List<String> parameters) {
     super(project, true);
     myFunctionName = functionName;
     myParameters = parameters;
@@ -93,7 +93,17 @@ public class AddTypeInformationDialog extends DialogWrapper {
       y++;
     }
 
+    obtainFieldsFromDatabase();
+
     return rootPanel;
+  }
+
+  private void obtainFieldsFromDatabase() {
+    NumpyNamesService namesService = NumpyNamesService.getInstance();
+    String obtainedReturnType = namesService.functionsToReturnTypes.get(myFunctionName);
+    if (obtainedReturnType != null) {
+      returnTypeTextField.setText(obtainedReturnType);
+    }
   }
 
   @Override

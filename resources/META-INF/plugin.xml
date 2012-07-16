@@ -17,6 +17,9 @@
     <action id="pscAction" class="com.jetbrains.pyscicomp.TestAction" text="PSC Test Action">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+    <action id="editTypeInformation" class="com.jetbrains.pyscicomp.ui.EditTypeInformationAction" text="Edit Type Information...">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
