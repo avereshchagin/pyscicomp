@@ -17,7 +17,8 @@ package com.jetbrains.pyscicomp.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.jetbrains.pyscicomp.codeInsight.NumpyNamesService;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.pyscicomp.types.PredefinedTypeInformationService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,8 +100,7 @@ public class EditTypeInformationDialog extends DialogWrapper {
   }
 
   private void obtainFieldsFromDatabase() {
-    NumpyNamesService namesService = NumpyNamesService.getInstance();
-    String obtainedReturnType = namesService.functionsToReturnTypes.get(myFunctionName);
+    String obtainedReturnType = PredefinedTypeInformationService.getReturnType(myFunctionName);
     if (obtainedReturnType != null) {
       returnTypeTextField.setText(obtainedReturnType);
     }
@@ -108,8 +108,7 @@ public class EditTypeInformationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    NumpyNamesService namesService = NumpyNamesService.getInstance();
-    namesService.functionsToReturnTypes.put(myFunctionName, returnTypeTextField.getText());
+    PredefinedTypeInformationService.setReturnType(myFunctionName, returnTypeTextField.getText());
 
     super.doOKAction();
   }

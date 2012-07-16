@@ -15,12 +15,17 @@
  */
 package com.jetbrains.pyscicomp.codeInsight;
 
+import com.jetbrains.pyscicomp.types.FunctionTypeInfo;
+import com.jetbrains.pyscicomp.types.PredefinedTypeInformationService;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nullable;
 
-public class NumpyTypeProvider extends PyTypeProviderBase {
+/**
+ * Provides type information stored in user-editable database.
+ */
+public class PredefinedTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
@@ -28,13 +33,8 @@ public class NumpyTypeProvider extends PyTypeProviderBase {
     if (function.isValid()) {
       String qualifiedName = Utils.getQualifiedName(function, callSite);
       if (Utils.isNumpyFunction(function, callSite)) {
-        NumpyNamesService namesService = NumpyNamesService.getInstance();
-        String returnType = namesService.functionsToReturnTypes.get(qualifiedName);
+        String returnType = PredefinedTypeInformationService.getReturnType(qualifiedName);
         if (returnType != null) {
-          System.out.println("Function: " + qualifiedName);
-          System.out.println("Return type: " + returnType);
-          System.out.println();
-
           return PyTypeParser.getTypeByName(function, returnType);
         }
       }
