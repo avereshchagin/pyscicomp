@@ -22,10 +22,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.pyscicomp.types.PredefinedTypeInformationService"
                         serviceImplementation="com.jetbrains.pyscicomp.types.PredefinedTypeInformationService"/>
-    <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection" groupKey="INSP.GROUP.python"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection"
+                     groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFO"
                      implementationClass="com.jetbrains.pyscicomp.codeInsight.NumpyUnknownReturnTypeInspection"/>
-    <lang.documentationProvider language="Python" order="first" implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
+    <localInspection language="Python" shortName="PermissibleArgumentCheckInspection" displayName="Permissible Argument Check Inspection"
+                     groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.pyscicomp.codeInsight.PermissibleArgumentCheckInspection"/>
+    <lang.documentationProvider language="Python" order="first"
+                                implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

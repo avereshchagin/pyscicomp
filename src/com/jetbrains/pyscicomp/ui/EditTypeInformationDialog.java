@@ -17,16 +17,15 @@ package com.jetbrains.pyscicomp.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
+import com.jetbrains.pyscicomp.types.FunctionTypeInfo;
 import com.jetbrains.pyscicomp.types.PredefinedTypeInformationService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class EditTypeInformationDialog extends DialogWrapper {
 
@@ -37,8 +36,8 @@ public class EditTypeInformationDialog extends DialogWrapper {
 
   private final String myFunctionName;
   private final List<String> myParameters;
-  private final JTextField returnTypeTextField = new JTextField(TEXT_FIELD_WIDTH);
-  private final Map<String, JTextField> parametersToTextFields = new HashMap<String, JTextField>();
+  private final JTextField myReturnTypeTextField = new JTextField(TEXT_FIELD_WIDTH);
+  private final Map<String, JTextField> myParametersToTextFields = new HashMap<String, JTextField>();
 
   public EditTypeInformationDialog(@Nullable Project project, @NotNull String functionName, @NotNull List<String> parameters) {
     super(project, true);
@@ -74,7 +73,7 @@ public class EditTypeInformationDialog extends DialogWrapper {
     constraints.gridx = 1;
     constraints.gridy = 1;
     constraints.anchor = GridBagConstraints.LINE_START;
-    rootPanel.add(returnTypeTextField, constraints);
+    rootPanel.add(myReturnTypeTextField, constraints);
 
     int y = 2;
     for (String parameter : myParameters) {
@@ -90,7 +89,7 @@ public class EditTypeInformationDialog extends DialogWrapper {
       constraints.anchor = GridBagConstraints.LINE_START;
       rootPanel.add(textField, constraints);
 
-      parametersToTextFields.put(parameter, textField);
+      myParametersToTextFields.put(parameter, textField);
       y++;
     }
 
@@ -102,13 +101,28 @@ public class EditTypeInformationDialog extends DialogWrapper {
   private void obtainFieldsFromDatabase() {
     String obtainedReturnType = PredefinedTypeInformationService.getReturnType(myFunctionName);
     if (obtainedReturnType != null) {
-      returnTypeTextField.setText(obtainedReturnType);
+      myReturnTypeTextField.setText(obtainedReturnType);
+    }
+
+    List<FunctionTypeInfo.Parameter> obtainedParameters = PredefinedTypeInformationService.getParameters(myFunctionName);
+    if (obtainedParameters != null) {
+      for (FunctionTypeInfo.Parameter parameter : obtainedParameters) {
+        myParametersToTextFields.get(parameter.name).setText(parameter.type.name);
+      }
     }
   }
 
   @Override
   protected void doOKAction() {
-    PredefinedTypeInformationService.setReturnType(myFunctionName, returnTypeTextField.getText());
+    PredefinedTypeInformationService.setReturnType(myFunctionName, myReturnTypeTextField.getText());
+
+    List<FunctionTypeInfo.Parameter> parameters = new ArrayList<FunctionTypeInfo.Parameter>();
+    for (String parameterName : myParameters) {
+      String parameterType = myParametersToTextFields.get(parameterName).getText();
+      parameters.add(new FunctionTypeInfo.Parameter(parameterName, new FunctionTypeInfo.Type(parameterType), false,
+                                                    Collections.<String>emptySet()));
+    }
+    PredefinedTypeInformationService.setParameters(myFunctionName, parameters);
 
     super.doOKAction();
   }

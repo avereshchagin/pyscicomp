@@ -15,23 +15,39 @@
  */
 package com.jetbrains.pyscicomp.types;
 
-import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class FunctionTypeInfo {
 
-  public Map<String, Parameter> parameters = new HashMap<String, Parameter>();
+  @NotNull
+  public List<Parameter> parameters = new ArrayList<Parameter>();
   public Type returnType;
 
   public static class Parameter {
 
+    public String name;
     public Type type;
     public boolean optional;
 
-    public Parameter(Type parameterType, boolean isOptional) {
+    @NotNull
+    public Set<String> permissibleValues = new HashSet<String>();
+
+    /**
+     * Default constructor is a requirement of XML serializer.
+     */
+    public Parameter() {
+    }
+
+    public Parameter(String parameterName, Type parameterType, boolean isOptional, Set<String> values) {
+      name = parameterName;
       type = parameterType;
       optional = isOptional;
+      permissibleValues = values;
     }
   }
 
@@ -39,6 +55,9 @@ public class FunctionTypeInfo {
 
     public String name;
 
+    /**
+     * Default constructor is a requirement of XML serializer.
+     */
     public Type() {
     }
 

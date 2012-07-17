@@ -16,12 +16,16 @@
 package com.jetbrains.pyscicomp.types;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @State(name = "PredefinedTypeInformationService",
        storages = {
@@ -66,5 +70,46 @@ public class PredefinedTypeInformationService implements PersistentStateComponen
     typeInfo.returnType = new FunctionTypeInfo.Type(returnType);
 
     service.functions.put(functionName, typeInfo);
+  }
+
+  @Nullable
+  public static List<FunctionTypeInfo.Parameter> getParameters(@NotNull String functionName) {
+    PredefinedTypeInformationService service = getInstance();
+
+    FunctionTypeInfo typeInfo = service.functions.get(functionName);
+    if (typeInfo != null) {
+      return Collections.unmodifiableList(typeInfo.parameters);
+    }
+    return null;
+  }
+
+  public static void setParameters(@NotNull String functionName, @NotNull List<FunctionTypeInfo.Parameter> parameters) {
+    PredefinedTypeInformationService service = getInstance();
+
+    FunctionTypeInfo typeInfo = service.functions.get(functionName);
+    if (typeInfo == null) {
+      typeInfo = new FunctionTypeInfo();
+    }
+    typeInfo.parameters = parameters;
+
+    service.functions.put(functionName, typeInfo);
+  }
+
+  @NotNull
+  public static Map<Pair<Integer, String>, Set<String>> getPermissibleArguments(@NotNull String functionName) {
+    PredefinedTypeInformationService service = getInstance();
+
+    FunctionTypeInfo typeInfo = service.functions.get(functionName);
+    if (typeInfo != null) {
+      Map<Pair<Integer, String>, Set<String>> result = new HashMap<Pair<Integer, String>, Set<String>>();
+      for (int i = 0; i < typeInfo.parameters.size(); i++) {
+        FunctionTypeInfo.Parameter parameter = typeInfo.parameters.get(i);
+        if (parameter.permissibleValues.size() != 0) {
+          result.put(new Pair<Integer, String>(i, parameter.name), Collections.unmodifiableSet(parameter.permissibleValues));
+        }
+      }
+      return result;
+    }
+    return Collections.emptyMap();
   }
 }
