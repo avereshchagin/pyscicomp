@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pyscicomp.types;
+package com.jetbrains.pyscicomp.codeInsight.types;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;

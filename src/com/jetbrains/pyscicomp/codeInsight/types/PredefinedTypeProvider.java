@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pyscicomp.codeInsight;
+package com.jetbrains.pyscicomp.codeInsight.types;
 
-import com.jetbrains.pyscicomp.types.FunctionTypeInfo;
-import com.jetbrains.pyscicomp.types.PredefinedTypeInformationService;
+import com.jetbrains.pyscicomp.codeInsight.Utils;
+import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 /**

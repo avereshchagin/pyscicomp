@@ -19,7 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.pyscicomp.types.PredefinedTypeInformationService;
+import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.psi.Callable;
@@ -53,7 +53,7 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
     private void checkArguments(@NotNull PyCallExpression callExpression) {
       Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
       if (calleeFunction instanceof PyFunction) {
-        String functionName = Utils.getQualifiedName((PyFunction)calleeFunction, callExpression);
+        String functionName = Utils.getQualifiedName((PyFunction) calleeFunction, callExpression);
         Map<Pair<Integer, String>, Set<String>> permissibleArguments = PredefinedTypeInformationService.getPermissibleArguments(
           functionName);
 
