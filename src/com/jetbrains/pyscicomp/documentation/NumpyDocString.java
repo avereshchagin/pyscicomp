@@ -15,11 +15,19 @@
  */
 package com.jetbrains.pyscicomp.documentation;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,24 +67,82 @@ public class NumpyDocString {
     return myReturns;
   }
 
+  /**
+   * Returns PyFunction object for specified fully qualified name accessible from specified reference.
+   * @param redirect A fully qualified name of function that is redirected to.
+   * @param reference An original reference element.
+   * @return Resolved function or null if it was not resolved.
+   */
+  @Nullable
+  private static PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull final PsiElement reference) {
+    PyQualifiedName qualifiedName = PyQualifiedName.fromDottedString(redirect);
+    final String functionName = qualifiedName.getLastComponent();
+    List<PsiFileSystemItem> items = ResolveImportUtil.resolveModule(qualifiedName.removeLastComponent(),
+                                                                    reference.getContainingFile(), true, 0);
+    for (PsiFileSystemItem item : items) {
+      final PyFunction[] function = {null};
+      item.accept(new PyElementVisitor() {
+        @Override
+        public void visitDirectory(PsiDirectory dir) {
+          PsiElement element = PyUtil.getPackageElement(dir);
+          if (element != null) {
+            element.accept(this);
+          }
+        }
+
+        @Override
+        public void visitPyFile(PyFile file) {
+          PsiElement functionElement = file.getElementNamed(functionName);
+          if (functionElement instanceof PyFunction) {
+            function[0] = (PyFunction) functionElement;
+          }
+        }
+      });
+
+      if (function[0] != null) {
+        return function[0];
+      }
+    }
+    return null;
+  }
+
   @NotNull
-  public static NumpyDocString parse(String text, PsiElement reference) {
-    List<String> lines = splitByLines(text);
-    dedent(lines);
+  private static NumpyDocString forFunction(@NotNull PyFunction function, @NotNull PsiElement reference, @Nullable String knownSignature) {
+    String docString = function.getDocStringValue();
+    if (docString != null) {
 
-    String signature = null;
-    if (SIGNATURE.matcher(lines.get(0)).matches()) {
-      signature = lines.get(0);
-      lines.remove(0);
+      List<String> lines = splitByLines(docString);
       dedent(lines);
-    }
 
-    String redirect = findRedirect(lines);
-    if (redirect != null) {
-      // TODO: support redirects
-    }
+      String signature = null;
+      if (SIGNATURE.matcher(lines.get(0)).matches()) {
+        signature = lines.get(0);
+        lines.remove(0);
+        dedent(lines);
+      }
 
-    return new NumpyDocString(signature, lines);
+      String redirect = findRedirect(lines);
+      if (redirect != null) {
+        PyFunction resolvedFunction = resolveRedirectToFunction(redirect, reference);
+        if (resolvedFunction != null) {
+          return forFunction(resolvedFunction, reference, knownSignature != null ? knownSignature : signature);
+        }
+      }
+
+      return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines);
+    }
+    return new NumpyDocString(null, Collections.<String>emptyList());
+  }
+
+  /**
+   * Returns NumpyDocString object confirming to Numpy-style formatted docstring of specified function.
+   * @param function Function containing docstring for which Numpy wrapper object is to be obtained.
+   * @param reference An original reference element to specified function.
+   * @return Numpy docstring wrapper object for specified function.
+   */
+  @NotNull
+  public static NumpyDocString forFunction(@NotNull PyFunction function, @NotNull PsiElement reference) {
+    return forFunction(function, reference, null);
   }
 
   @NotNull

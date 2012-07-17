@@ -27,8 +27,8 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
     if (element instanceof PyFunction) {
       PyFunction function = (PyFunction) element;
       if (Utils.isNumpyFunction(function, null)) {
-        String docStringValue = function.getDocStringValue();
-        NumpyDocString docString = NumpyDocString.parse(docStringValue, originalElement);
+        NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
+
         NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
         builder.setSignature(docString.getSignature());
         for (DocStringParameter parameter : docString.getParameters()) {
