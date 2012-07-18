@@ -18,28 +18,50 @@ package com.jetbrains.pyscicomp.documentation;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.pyscicomp.codeInsight.Utils;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 
 public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof PyFunction) {
-      PyFunction function = (PyFunction) element;
-      if (Utils.isNumpyFunction(function, null)) {
-        NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
+  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+    final String[] result = {null};
+    element.accept(new PyElementVisitor() {
 
-        NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
-        builder.setSignature(docString.getSignature());
-        for (DocStringParameter parameter : docString.getParameters()) {
-          builder.addParameter(parameter);
+      @Override
+      public void visitPyTargetExpression(PyTargetExpression node) {
+        PyExpression assignedValue = node.findAssignedValue();
+        if (assignedValue != null) {
+          assignedValue.accept(this);
         }
-        for (DocStringParameter parameter : docString.getReturns()) {
-          builder.addReturn(parameter);
-        }
-        return builder.build();
       }
-    }
-    return null;
+
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        PsiElement resolvedElement = node.followAssignmentsChain(PyResolveContext.noImplicits()).getElement();
+        if (resolvedElement != null) {
+          resolvedElement.accept(this);
+        }
+      }
+
+      @Override
+      public void visitPyFunction(PyFunction function) {
+        if (Utils.isNumpyFunction(function, null)) {
+          NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
+
+          NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
+          builder.setSignature(docString.getSignature());
+          for (DocStringParameter parameter : docString.getParameters()) {
+            builder.addParameter(parameter);
+          }
+          for (DocStringParameter parameter : docString.getReturns()) {
+            builder.addReturn(parameter);
+          }
+          result[0] = builder.build();
+        }
+      }
+    });
+
+    return result[0];
   }
 }
