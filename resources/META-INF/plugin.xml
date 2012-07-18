@@ -30,6 +30,8 @@
                      implementationClass="com.jetbrains.pyscicomp.codeInsight.PermissibleArgumentCheckInspection"/>
     <lang.documentationProvider language="Python" order="first"
                                 implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.pyscicomp.codeInsight.completion.PermissibleArgumentCompletionContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

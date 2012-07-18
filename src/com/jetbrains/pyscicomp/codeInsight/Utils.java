@@ -18,8 +18,11 @@ package com.jetbrains.pyscicomp.codeInsight;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.Callable;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,18 @@ public class Utils {
     }
     result.add(function.getName());
     return StringUtil.join(result, ".");
+  }
+
+  @Nullable
+  public static String getQualifiedNameOfCalleeFunction(@Nullable PyCallExpression callExpression) {
+    if (callExpression != null) {
+      Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+      if (calleeFunction instanceof PyFunction) {
+        PyFunction function = (PyFunction) calleeFunction;
+        return getQualifiedName(function, callExpression);
+      }
+    }
+    return null;
   }
 
   public static boolean isNumpyFunction(@NotNull PyFunction function, @Nullable PsiElement callSite) {
