@@ -18,12 +18,15 @@ package com.jetbrains.pyscicomp.codeInsight.types;
 import com.jetbrains.pyscicomp.codeInsight.Utils;
 import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Provides type information stored in user-editable database.
@@ -35,10 +38,28 @@ public class PredefinedTypeProvider extends PyTypeProviderBase {
   public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
     if (function.isValid()) {
       String qualifiedName = Utils.getQualifiedName(function, callSite);
-      if (Utils.isNumpyFunction(function, callSite)) {
-        String returnType = PredefinedTypeInformationService.getReturnType(qualifiedName);
-        if (returnType != null) {
-          return PyTypeParser.getTypeByName(function, returnType);
+
+      String returnType = PredefinedTypeInformationService.getReturnType(qualifiedName);
+      if (returnType != null) {
+        return PyTypeParser.getTypeByName(function, returnType);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getParameterType(PyNamedParameter parameter, PyFunction function, TypeEvalContext context) {
+    if (function.isValid()) {
+      String qualifiedName = Utils.getQualifiedName(function, null);
+
+      List<FunctionTypeInfo.Parameter> parameters = PredefinedTypeInformationService.getParameters(qualifiedName);
+      String parameterName = parameter.getName();
+      if (parameters != null && parameterName != null) {
+        for (FunctionTypeInfo.Parameter parameterInfo : parameters) {
+          if (parameterName.equals(parameterInfo.name)) {
+            return PyTypeParser.getTypeByName(function, parameterInfo.type.name);
+          }
         }
       }
     }
