@@ -20,8 +20,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService"
-                        serviceImplementation="com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService"/>
     <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection"
                      groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFO"
                      implementationClass="com.jetbrains.pyscicomp.codeInsight.NumpyUnknownReturnTypeInspection"/>

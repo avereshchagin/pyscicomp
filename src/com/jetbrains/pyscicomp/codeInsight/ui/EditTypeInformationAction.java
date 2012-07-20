@@ -26,12 +26,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.pyscicomp.codeInsight.Utils;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class EditTypeInformationAction extends AnAction {
 
@@ -49,14 +45,9 @@ public class EditTypeInformationAction extends AnAction {
           if (referenceAt != null) {
             PsiElement resolved = referenceAt.resolve();
             if (resolved instanceof PyFunction) {
-              String name = Utils.getQualifiedName((PyFunction) resolved, referenceAt.getElement());
-              List<String> parameters = new ArrayList<String>();
-              for (PyParameter parameter : ((PyFunction) resolved).getParameterList().getParameters()) {
-                parameters.add(parameter.getName());
-              }
-
-
-              new EditTypeInformationDialog(project, name, parameters).show();
+              FunctionTypeInformation typeInformation =
+                FunctionTypeInformation.fromPyFunction((PyFunction) resolved, referenceAt.getElement());
+              new EditTypeInformationDialog(project, typeInformation).show();
             }
           }
         }

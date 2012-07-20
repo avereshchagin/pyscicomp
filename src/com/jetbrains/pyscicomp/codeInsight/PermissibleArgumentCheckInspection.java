@@ -17,9 +17,10 @@ package com.jetbrains.pyscicomp.codeInsight;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
+import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
+import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.psi.Callable;
@@ -31,7 +32,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class PermissibleArgumentCheckInspection extends PyInspection {
@@ -54,19 +56,33 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
       Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
       if (calleeFunction instanceof PyFunction) {
         String functionName = Utils.getQualifiedName((PyFunction) calleeFunction, callExpression);
-        Map<Pair<Integer, String>, Set<String>> permissibleArguments = PredefinedTypeInformationService.getPermissibleArguments(
-          functionName);
-
-        for (Map.Entry<Pair<Integer, String>, Set<String>> entry : permissibleArguments.entrySet()) {
-          PyStringLiteralExpression passedString = callExpression.getArgument(entry.getKey().first, entry.getKey().second,
-                                                                              PyStringLiteralExpression.class);
-          if (passedString != null) {
-            if (!entry.getValue().contains(passedString.getStringValue())) {
-              registerProblem(passedString, "Argument must be one of " + entry.getValue());
+        FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+        if (typeInformation != null) {
+          List<ParameterTypeInformation> parameters = typeInformation.getParameters();
+          for (int i = 0; i < parameters.size(); i++) {
+            ParameterTypeInformation parameter = parameters.get(i);
+            Set<String> values = parameter.getPermissibleValues();
+            if (!values.isEmpty()) {
+              PyStringLiteralExpression passedString = callExpression.getArgument(i, parameter.getName(),
+                                                                                  PyStringLiteralExpression.class);
+              if (passedString != null) {
+                if (!containsIgnoreCase(values, passedString.getStringValue())) {
+                  registerProblem(passedString, "Argument must be one of " + values);
+                }
+              }
             }
           }
         }
       }
+    }
+
+    private boolean containsIgnoreCase(@NotNull Collection<String> collection, @NotNull String value) {
+      for (String element : collection) {
+        if (value.equalsIgnoreCase(element)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override

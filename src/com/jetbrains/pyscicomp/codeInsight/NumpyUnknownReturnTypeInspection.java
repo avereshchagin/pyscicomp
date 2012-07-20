@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.ui.EditTypeInformationDialog;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
@@ -60,12 +61,13 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
         if (resolved instanceof PyFunction) {
           PyFunction function = (PyFunction) resolved;
           if (function.isValid() && function.getReturnType(myTypeEvalContext, referenceExpression) == null) {
+
             List<String> parameters = new ArrayList<String>();
             for (PyParameter parameter : function.getParameterList().getParameters()) {
               parameters.add(parameter.getName());
             }
             registerProblem(node, "Unknown return type",
-                            new AddTypeInformationFix(Utils.getQualifiedName(function, referenceExpression), parameters));
+                            new AddTypeInformationFix(FunctionTypeInformation.fromPyFunction(function, referenceExpression)));
           }
         }
       }
@@ -74,12 +76,10 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
 
   private static class AddTypeInformationFix implements LocalQuickFix {
 
-    private final String myFunction;
-    private final List<String> myParameters;
+    private final FunctionTypeInformation myTypeInformation;
 
-    public AddTypeInformationFix(@NotNull String function, @NotNull List<String> parameters) {
-      myFunction = function;
-      myParameters = parameters;
+    public AddTypeInformationFix(@NotNull FunctionTypeInformation typeInformation) {
+      myTypeInformation = typeInformation;
     }
 
     @NotNull
@@ -96,7 +96,7 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      new EditTypeInformationDialog(project, myFunction, myParameters).show();
+      new EditTypeInformationDialog(project, myTypeInformation).show();
     }
   }
 

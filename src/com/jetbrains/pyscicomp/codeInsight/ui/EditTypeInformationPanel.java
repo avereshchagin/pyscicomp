@@ -15,25 +15,36 @@
  */
 package com.jetbrains.pyscicomp.codeInsight.ui;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.ui.EditorTextField;
-import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInfo;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
+import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
 import com.jetbrains.python.PythonFileType;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EditTypeInformationPanel extends JPanel {
 
-  private final FunctionWrapper myFunction;
+  private static final String RETURN_TYPE_LABEL = "Return type:";
 
-  public EditTypeInformationPanel(FunctionWrapper function) {
+  private final FunctionTypeInformation myFunction;
+
+  private EditorTextField myReturnTypeField;
+  private final List<EditParameterPanel> myParameterFields = new ArrayList<EditParameterPanel>();
+  private boolean myModified = false;
+
+  public EditTypeInformationPanel(FunctionTypeInformation function) {
     super(new GridBagLayout());
     myFunction = function;
 
-    createComponents();
+    initComponents();
   }
 
-  private void createComponents() {
+  private void initComponents() {
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.insets = new Insets(5, 5, 5, 5);
 
@@ -48,24 +59,51 @@ public class EditTypeInformationPanel extends JPanel {
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.anchor = GridBagConstraints.LINE_END;
-    add(new JLabel("<Return type>"), constraints);
+    add(new JLabel(RETURN_TYPE_LABEL), constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 1;
     constraints.anchor = GridBagConstraints.LINE_START;
 
-    EditorTextField editorTextField = new EditorTextField("", null, PythonFileType.INSTANCE);
-
-    add(editorTextField, constraints);
-    editorTextField.setPreferredSize(new Dimension(250, 25));
+    myReturnTypeField = new EditorTextField(myFunction.getReturnType(), null, PythonFileType.INSTANCE);
+    myReturnTypeField.setPreferredSize(new Dimension(250, 25));
+    add(myReturnTypeField, constraints);
+    myReturnTypeField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        myModified = true;
+      }
+    });
 
     int y = 2;
-    for (FunctionTypeInfo.Parameter parameter : myFunction.getTypeInfo().parameters) {
+    for (ParameterTypeInformation parameter : myFunction.getParameters()) {
       constraints.gridx = 0;
       constraints.gridy = y;
       constraints.gridwidth = 2;
-      add(new EditParameterPanel(parameter), constraints);
+      EditParameterPanel parameterPanel = new EditParameterPanel(parameter);
+      myParameterFields.add(parameterPanel);
+      add(parameterPanel, constraints);
       y++;
     }
+  }
+
+  public FunctionTypeInformation getEditResult() {
+    List<ParameterTypeInformation> parameters = new ArrayList<ParameterTypeInformation>();
+    for (EditParameterPanel field : myParameterFields) {
+      parameters.add(field.getEditResult());
+    }
+    return new FunctionTypeInformation(myFunction.getName(), myReturnTypeField.getText(), parameters);
+  }
+
+  public boolean isModified() {
+    if (myModified) {
+      return true;
+    }
+    for (EditParameterPanel field : myParameterFields) {
+      if (field.isModified()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

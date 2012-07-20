@@ -22,27 +22,25 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
-import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInfo;
-import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
+import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class TypeInformationConfigurable implements Configurable {
 
-  private final List<FunctionWrapper> myFunctions = new ArrayList<FunctionWrapper>();
+  private boolean myModified = false;
 
-  public TypeInformationConfigurable() {
-    PredefinedTypeInformationService service = PredefinedTypeInformationService.getInstance();
-    for (Map.Entry<String, FunctionTypeInfo> entry : service.functions.entrySet()) {
-      myFunctions.add(new FunctionWrapper(entry));
-    }
-  }
+  @Nullable
+  private EditTypeInformationPanel myEditTypeInformationPanel = null;
+
+  private final List<FunctionTypeInformation> pendingModifications = new ArrayList<FunctionTypeInformation>();
 
   @Nls
   @Override
@@ -57,7 +55,7 @@ public class TypeInformationConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
-    final JBList list = new JBList(myFunctions);
+    final JBList list = new JBList(TypeInformationCache.getInstance().getAsList());
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -75,17 +73,18 @@ public class TypeInformationConfigurable implements Configurable {
         }
       });
 
-
-
     final Splitter splitter = new Splitter(true);
     splitter.setFirstComponent(decorator.createPanel());
+    splitter.setSecondComponent(new JPanel());
 
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         Object obj = list.getSelectedValue();
-        if (obj instanceof FunctionWrapper) {
-          splitter.setSecondComponent(new EditTypeInformationPanel((FunctionWrapper) obj));
+        if (obj instanceof FunctionTypeInformation) {
+          checkModification();
+          myEditTypeInformationPanel = new EditTypeInformationPanel((FunctionTypeInformation) obj);
+          splitter.setSecondComponent(myEditTypeInformationPanel);
         }
       }
     });
@@ -95,12 +94,18 @@ public class TypeInformationConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return false;
+    checkModification();
+    return myModified;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-
+    checkModification();
+    TypeInformationCache cache = TypeInformationCache.getInstance();
+    for (FunctionTypeInformation modification : pendingModifications) {
+      cache.putFunction(modification, false);
+    }
+    cache.save();
   }
 
   @Override
@@ -119,5 +124,13 @@ public class TypeInformationConfigurable implements Configurable {
 
   private void remove() {
 
+  }
+
+  private void checkModification() {
+    if (myEditTypeInformationPanel != null && myEditTypeInformationPanel.isModified()) {
+      myModified = true;
+      pendingModifications.add(myEditTypeInformationPanel.getEditResult());
+      myEditTypeInformationPanel = null;
+    }
   }
 }

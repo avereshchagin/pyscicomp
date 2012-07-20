@@ -25,15 +25,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.pyscicomp.codeInsight.Utils;
-import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInfo;
-import com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeInformationService;
+import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
+import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class PermissibleArgumentCompletionContributor extends CompletionContributor {
@@ -44,14 +42,10 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
   }
 
   private static void suggestVariantsForOrderedArgument(String functionName, int index, CompletionResultSet resultSet) {
-    List<FunctionTypeInfo.Parameter> parameters = PredefinedTypeInformationService.getParameters(functionName);
-
-    if (parameters != null && index >= 0 && index < parameters.size()) {
-      Set<String> permissibleValues = parameters.get(index).permissibleValues;
-      if (permissibleValues != null) {
-        for (String value : permissibleValues) {
-          addSuggestion(resultSet, "'" + value + "'");
-        }
+    FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+    if (typeInformation != null) {
+      for (String value : typeInformation.getPermissibleValuesForParameter(index)) {
+        addSuggestion(resultSet, "'" + value + "'");
       }
     }
   }
@@ -59,31 +53,19 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
   private static void suggestVariantsForNamedArgument(@NotNull String functionName,
                                                       @Nullable String keyword,
                                                       CompletionResultSet resultSet) {
-    List<FunctionTypeInfo.Parameter> parameters = PredefinedTypeInformationService.getParameters(functionName);
-
-    if (parameters != null) {
-      for (FunctionTypeInfo.Parameter parameter : parameters) {
-        if (parameter.name.equals(keyword)) {
-          Set<String> permissibleValues = parameter.permissibleValues;
-          if (permissibleValues != null) {
-            for (String value : permissibleValues) {
-              addSuggestion(resultSet, "'" + value + "'");
-            }
-          }
-        }
+    FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+    if (typeInformation != null) {
+      for (String value : typeInformation.getPermissibleValuesForParameter(keyword)) {
+        addSuggestion(resultSet, "'" + value + "'");
       }
     }
   }
 
   private static void suggestVariantsForAllNamedArguments(String functionName, CompletionResultSet resultSet) {
-    Map<Pair<Integer, String>, Set<String>> permissibleArguments =
-      PredefinedTypeInformationService.getPermissibleArguments(functionName);
-
-    for (Map.Entry<Pair<Integer, String>, Set<String>> entry : permissibleArguments.entrySet()) {
-      String keywordParameter = entry.getKey().second;
-      for (String value : entry.getValue()) {
-        addSuggestion(resultSet, keywordParameter + "='" + value + "'");
-      }
+    FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+    Set<Pair<String, String>> permissibleArguments = typeInformation.getAllPermissibleArguments();
+    for (Pair<String, String> argument : permissibleArguments) {
+      addSuggestion(resultSet, argument.first + "='" + argument.second + "'");
     }
   }
 
