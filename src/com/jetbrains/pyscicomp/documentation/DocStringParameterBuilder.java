@@ -17,8 +17,8 @@ package com.jetbrains.pyscicomp.documentation;
 
 public class DocStringParameterBuilder {
 
-  private String myName = null;
-  private String myType = null;
+  private String myName = "";
+  private String myType = "";
   private StringBuilder myDescription = new StringBuilder();
 
   public void setName(String name) {
