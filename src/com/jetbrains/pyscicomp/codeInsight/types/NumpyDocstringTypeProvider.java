@@ -42,13 +42,28 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
 
   static {
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex or bool or string");
+    // 184 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex or bool");
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
     // an instance of numpy.core.multiarray.dtype, however PyTypeChecker isn't able to check it.
+    // 30 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("data-type", "object");
-    //NUMPY_ALIAS_TO_REAL_TYPE.put("dtype", "numpy.core.multiarray.dtype");
-    //NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex or bool or string");
+    // 16 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex or bool");
+    // 10 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "collections.Iterable");
+    // 9 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
+    // 5 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("Standard Python scalar object", "int or long or float or complex or bool");
+    // 4 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("Python type", "object");
+    // 3 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
+    // 3 occurrences
+    NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float");
+    // 1 occurrence
+    NUMPY_ALIAS_TO_REAL_TYPE.put("complex ndarray", "numpy.core.multiarray.ndarray of complex");
   }
 
   /**
@@ -70,8 +85,12 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType resolveTypeFromDocStringTypeAlias(@NotNull PsiElement anchor, @NotNull String alias) {
-    alias = cleanNumpyTypeString(alias);
     String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(alias);
+    if (realTypeName == null) {
+      // cleaned 'alias' can be used also in PyTypeParser.getTypeByName
+      alias = cleanNumpyTypeString(alias);
+      realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(alias);
+    }
     if (realTypeName != null) {
       PyType type = PyTypeParser.getTypeByName(anchor, realTypeName);
       if (type != null) {

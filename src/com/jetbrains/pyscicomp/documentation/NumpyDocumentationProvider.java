@@ -20,10 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.jetbrains.pyscicomp.codeInsight.Utils;
-import com.jetbrains.pyscicomp.codeInsight.types.NumpyDocstringTypeProvider;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
@@ -34,6 +36,8 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     final PyFunction function = Utils.extractCalleeFunction(element);
     if (function != null) {
+      final TypeEvalContext context = TypeEvalContext.fastStubOnly(originalElement.getContainingFile());
+
       StringBuilder stringBuilder = new StringBuilder();
       stringBuilder.append(function.getName());
       stringBuilder.append(" (");
@@ -51,8 +55,13 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
           sb.append(": ");
 
-          PyType parameterType = NumpyDocstringTypeProvider.getParameterType(function, name);
-          sb.append(parameterType != null ? parameterType.getName() : UNKNOWN_TYPE);
+          PyNamedParameter namedParameter = parameter.getAsNamed();
+          if (namedParameter != null) {
+            PyType type = namedParameter.getType(context);
+            sb.append(type != null ? type.getName() : UNKNOWN_TYPE);
+          } else {
+            sb.append(UNKNOWN_TYPE);
+          }
 
           if (optional) {
             sb.append("]");
@@ -62,7 +71,8 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
       }, ", "));
 
       stringBuilder.append(") -&gt; ");
-      PyType returnType = NumpyDocstringTypeProvider.getReturnType(function, originalElement);
+      PyQualifiedExpression callSite = originalElement instanceof PyQualifiedExpression ? (PyQualifiedExpression) originalElement : null;
+      PyType returnType = function.getReturnType(context, callSite);
       stringBuilder.append(returnType != null ? returnType.getName() : UNKNOWN_TYPE);
       return stringBuilder.toString();
     }
