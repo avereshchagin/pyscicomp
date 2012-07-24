@@ -15,12 +15,13 @@
  */
 package com.jetbrains.pyscicomp.documentation;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +44,20 @@ public class NumpyDocString {
   private static final Pattern PARAMETER_WITH_TYPE = Pattern.compile("^(.+) : (.+)$");
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
 
+  private final PsiElement myReference;
+
   private final String mySignature;
   private final List<DocStringParameter> myParameters = new ArrayList<DocStringParameter>();
   private final List<DocStringParameter> myReturns = new ArrayList<DocStringParameter>();
 
-  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines) {
+  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines, @NotNull PsiElement reference) {
+    myReference = reference;
     mySignature = signature;
     parseSections(lines);
+  }
+
+  public PsiElement getReference() {
+    return myReference;
   }
 
   @Nullable
@@ -65,6 +73,16 @@ public class NumpyDocString {
   @NotNull
   public List<DocStringParameter> getReturns() {
     return myReturns;
+  }
+
+  @Nullable
+  public DocStringParameter getNamedParameter(@NotNull String name) {
+    for (DocStringParameter parameter : getParameters()) {
+      if (name.equals(parameter.getName())) {
+        return parameter;
+      }
+    }
+    return null;
   }
 
   /**
@@ -129,9 +147,9 @@ public class NumpyDocString {
         }
       }
 
-      return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines);
+      return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines, reference);
     }
-    return new NumpyDocString(null, Collections.<String>emptyList());
+    return new NumpyDocString(null, Collections.<String>emptyList(), reference);
   }
 
   /**

@@ -16,52 +16,78 @@
 package com.jetbrains.pyscicomp.documentation;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.jetbrains.pyscicomp.codeInsight.Utils;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.pyscicomp.codeInsight.types.NumpyDocstringTypeProvider;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.types.PyType;
 
 public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
+  public static final String NAMELESS_PARAMETER = "_";
+  public static final String UNKNOWN_TYPE = "unknown";
+
+  @Override
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    final PyFunction function = Utils.extractCalleeFunction(element);
+    if (function != null) {
+      StringBuilder stringBuilder = new StringBuilder();
+      stringBuilder.append(function.getName());
+      stringBuilder.append(" (");
+
+      stringBuilder.append(StringUtil.join(function.getParameterList().getParameters(), new Function<PyParameter, String>() {
+        @Override
+        public String fun(PyParameter parameter) {
+          StringBuilder sb = new StringBuilder();
+          boolean optional = parameter.getDefaultValue() != null;
+          if (optional) {
+            sb.append("[");
+          }
+          String name = parameter.getName();
+          sb.append(name != null ? name : NAMELESS_PARAMETER);
+
+          sb.append(": ");
+
+          PyType parameterType = NumpyDocstringTypeProvider.getParameterType(function, name);
+          sb.append(parameterType != null ? parameterType.getName() : UNKNOWN_TYPE);
+
+          if (optional) {
+            sb.append("]");
+          }
+          return sb.toString();
+        }
+      }, ", "));
+
+      stringBuilder.append(") -&gt; ");
+      PyType returnType = NumpyDocstringTypeProvider.getReturnType(function, originalElement);
+      stringBuilder.append(returnType != null ? returnType.getName() : UNKNOWN_TYPE);
+      return stringBuilder.toString();
+    }
+    return null;
+  }
+
   @Override
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
-    final String[] result = {null};
-    element.accept(new PyElementVisitor() {
+    PyFunction function = Utils.extractCalleeFunction(element);
+    if (function != null) {
+      if (Utils.isNumpyFunction(function, originalElement)) {
+        NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
 
-      @Override
-      public void visitPyTargetExpression(PyTargetExpression node) {
-        PyExpression assignedValue = node.findAssignedValue();
-        if (assignedValue != null) {
-          assignedValue.accept(this);
+        NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
+        builder.setSignature(docString.getSignature());
+        for (DocStringParameter parameter : docString.getParameters()) {
+          builder.addParameter(parameter);
         }
-      }
-
-      @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
-        PsiElement resolvedElement = node.followAssignmentsChain(PyResolveContext.noImplicits()).getElement();
-        if (resolvedElement != null) {
-          resolvedElement.accept(this);
+        for (DocStringParameter parameter : docString.getReturns()) {
+          builder.addReturn(parameter);
         }
+
+        return builder.build();
       }
-
-      @Override
-      public void visitPyFunction(PyFunction function) {
-        if (Utils.isNumpyFunction(function, null)) {
-          NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
-
-          NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
-          builder.setSignature(docString.getSignature());
-          for (DocStringParameter parameter : docString.getParameters()) {
-            builder.addParameter(parameter);
-          }
-          for (DocStringParameter parameter : docString.getReturns()) {
-            builder.addReturn(parameter);
-          }
-          result[0] = builder.build();
-        }
-      }
-    });
-
-    return result[0];
+    }
+    return null;
   }
 }
