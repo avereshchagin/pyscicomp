@@ -36,6 +36,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <typeProvider order="first" implementation="com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeProvider"/>
     <typeProvider implementation="com.jetbrains.pyscicomp.codeInsight.types.NumpyDocstringTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.pyscicomp.codeInsight.types.NumpyModuleMembersProvider"/>
   </extensions>
 
 
