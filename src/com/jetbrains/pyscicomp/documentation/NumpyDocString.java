@@ -18,10 +18,7 @@ package com.jetbrains.pyscicomp.documentation;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +39,7 @@ public class NumpyDocString {
   private static final Pattern SIGNATURE = Pattern.compile("^([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)$");
   private static final Pattern SECTION_HEADER = Pattern.compile("^[-=]+");
   private static final Pattern PARAMETER_WITH_TYPE = Pattern.compile("^(.+) : (.+)$");
+  private static final Pattern PARAMETER_WITHOUT_TYPE = Pattern.compile("^([^ :,]+)$");
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
 
   private final PsiElement myReference;
@@ -127,8 +125,15 @@ public class NumpyDocString {
   @NotNull
   private static NumpyDocString forFunction(@NotNull PyFunction function, @NotNull PsiElement reference, @Nullable String knownSignature) {
     String docString = function.getDocStringValue();
-    if (docString != null) {
+    if (docString == null && "__init__".equals(function.getName())) {
+      // Docstring for constructor can be found in the docstring of class
+      PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        docString = cls.getDocStringValue();
+      }
+    }
 
+    if (docString != null) {
       List<String> lines = splitByLines(docString);
       dedent(lines);
 
@@ -146,7 +151,6 @@ public class NumpyDocString {
           return forFunction(resolvedFunction, reference, knownSignature != null ? knownSignature : signature);
         }
       }
-
       return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines, reference);
     }
     return new NumpyDocString(null, Collections.<String>emptyList(), reference);
@@ -255,11 +259,15 @@ public class NumpyDocString {
           parameters.add(builder.build());
         }
         builder = new DocStringParameterBuilder();
-        Matcher parameterMatcher = PARAMETER_WITH_TYPE.matcher(line);
-        if (parameterMatcher.matches()) {
-          if (parameterMatcher.groupCount() >= 2) {
-            builder.setName(parameterMatcher.group(1));
-            builder.setType(parameterMatcher.group(2));
+        Matcher parameterWithTypeMatcher = PARAMETER_WITH_TYPE.matcher(line);
+        if (parameterWithTypeMatcher.matches()) {
+          builder.setName(parameterWithTypeMatcher.group(1));
+          builder.setType(parameterWithTypeMatcher.group(2));
+        } else {
+          Matcher parameterWithoutTypeMatcher = PARAMETER_WITHOUT_TYPE.matcher(line);
+          if (parameterWithoutTypeMatcher.matches()) {
+            builder.setName(parameterWithoutTypeMatcher.group(1));
+            builder.setType("object");
           }
         }
       } else {
