@@ -21,16 +21,11 @@ import com.jetbrains.pyscicomp.documentation.NumpyDocString;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.psi.types.PyTypeProviderBase;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,8 +34,9 @@ import java.util.regex.Pattern;
  */
 public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
 
-  private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
+  private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
 
+  private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
   static {
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex or bool");
@@ -62,42 +58,49 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
     // 3 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float");
-    // 1 occurrence
-    NUMPY_ALIAS_TO_REAL_TYPE.put("complex ndarray", "numpy.core.multiarray.ndarray of complex");
   }
 
-  /**
-   * Type description in Numpy docstring format can contain additional information, i.e. indicate that parameter is optional.
-   * Function extracts type name from such string. "data-type" will be extracted for the following example:
-   *   data-type, optional
-   * @param typeString original type string.
-   * @return cleaned type name.
-   */
   @NotNull
-  private static String cleanNumpyTypeString(@NotNull String typeString) {
-    Pattern pattern = Pattern.compile("^([^, ]+)[, ]");
-    Matcher matcher = pattern.matcher(typeString);
-    if (matcher.find()) {
-      return matcher.group(1);
+  private static String cleanupOptional(@NotNull String typeString) {
+    int index = typeString.indexOf(", optional");
+    if (index >= 0) {
+      return typeString.substring(0, index);
     }
     return typeString;
   }
 
-  @Nullable
-  private static PyType resolveTypeFromDocStringTypeAlias(@NotNull PsiElement anchor, @NotNull String alias) {
-    String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(alias);
-    if (realTypeName == null) {
-      // cleaned 'alias' can be used also in PyTypeParser.getTypeByName
-      alias = cleanNumpyTypeString(alias);
-      realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(alias);
+  @NotNull
+  private static List<String> getNumpyUnionType(@NotNull String typeString) {
+    Matcher matcher = NUMPY_UNION_PATTERN.matcher(typeString);
+    if (matcher.matches()) {
+      typeString = matcher.group(1);
     }
+    return Arrays.asList(typeString.split(" *, *"));
+  }
+
+  @Nullable
+  private static PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
+    String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(typeString);
     if (realTypeName != null) {
       PyType type = PyTypeParser.getTypeByName(anchor, realTypeName);
       if (type != null) {
         return type;
       }
     }
-    return PyTypeParser.getTypeByName(anchor, alias);
+    return PyTypeParser.getTypeByName(anchor, typeString);
+  }
+
+  @Nullable
+  private static PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
+    typeString = cleanupOptional(typeString);
+    Set<PyType> types = new LinkedHashSet<PyType>();
+    for (String typeName : getNumpyUnionType(typeString)) {
+      PyType parsedType = parseSingleNumpyDocType(anchor, typeName);
+      if (parsedType != null) {
+        types.add(parsedType);
+      }
+    }
+    return PyUnionType.union(types);
   }
 
   @Nullable
@@ -121,7 +124,7 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
       parameter = docString.getNamedParameter(parameterName.substring(2));
     }
     if (parameter != null) {
-      return resolveTypeFromDocStringTypeAlias(function, parameter.getType());
+      return parseNumpyDocType(function, parameter.getType());
     }
     return null;
   }
@@ -152,7 +155,7 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
         // Function returns single value
         String typeString = returns.get(0).getType();
         if (typeString != null) {
-          return resolveTypeFromDocStringTypeAlias(docString.getReference(), typeString);
+          return parseNumpyDocType(docString.getReference(), typeString);
         }
         return null;
       default:
