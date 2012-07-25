@@ -22,10 +22,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="Python" shortName="NumpyUnknownReturnTypeInspection" displayName="Unknown Return Type Inspection"
                      groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFO"
-                     implementationClass="com.jetbrains.pyscicomp.codeInsight.NumpyUnknownReturnTypeInspection"/>
+                     implementationClass="com.jetbrains.pyscicomp.codeInsight.inspections.NumpyUnknownReturnTypeInspection"/>
     <localInspection language="Python" shortName="PermissibleArgumentCheckInspection" displayName="Permissible Argument Check Inspection"
                      groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.pyscicomp.codeInsight.PermissibleArgumentCheckInspection"/>
+                     implementationClass="com.jetbrains.pyscicomp.codeInsight.inspections.PermissibleArgumentCheckInspection"/>
     <lang.documentationProvider language="Python" order="first"
                                 implementationClass="com.jetbrains.pyscicomp.documentation.NumpyDocumentationProvider"/>
     <completion.contributor language="Python"
@@ -35,7 +35,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <typeProvider order="first" implementation="com.jetbrains.pyscicomp.codeInsight.types.PredefinedTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.pyscicomp.codeInsight.types.NumpyDocstringTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.pyscicomp.codeInsight.types.NumpyDocTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.pyscicomp.codeInsight.types.NumpyModuleMembersProvider"/>
   </extensions>
 

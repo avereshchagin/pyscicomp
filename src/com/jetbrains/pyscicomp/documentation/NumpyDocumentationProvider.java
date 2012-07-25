@@ -19,7 +19,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.pyscicomp.codeInsight.Utils;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
@@ -34,7 +34,7 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    final PyFunction function = Utils.extractCalleeFunction(element);
+    final PyFunction function = PyFunctionUtils.extractCalleeFunction(element);
     if (function != null) {
       final TypeEvalContext context = TypeEvalContext.fastStubOnly(originalElement.getContainingFile());
 
@@ -81,11 +81,11 @@ public class NumpyDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
-    PyFunction function = Utils.extractCalleeFunction(element);
+    PyFunction function = PyFunctionUtils.extractCalleeFunction(element);
     if (function != null) {
-      if (Utils.isNumpyFunction(function, originalElement)) {
-        NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
+      NumpyDocString docString = NumpyDocString.forFunction(function, originalElement);
 
+      if (docString != null) {
         NumpyDocumentationBuilder builder = new NumpyDocumentationBuilder();
         builder.setSignature(docString.getSignature());
         for (DocStringParameter parameter : docString.getParameters()) {

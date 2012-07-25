@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.pyscicomp.codeInsight.Utils;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class FunctionTypeInformation {
   }
 
   public static FunctionTypeInformation fromPyFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
-    String functionName = Utils.getQualifiedName(function, reference);
+    String functionName = PyFunctionUtils.getQualifiedName(function, reference);
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     if (typeInformation == null) {
       List<ParameterTypeInformation> parametersList = new ArrayList<ParameterTypeInformation>();

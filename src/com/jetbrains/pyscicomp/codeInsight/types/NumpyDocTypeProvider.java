@@ -32,11 +32,12 @@ import java.util.regex.Pattern;
 /**
  * Provides type information extracted from Numpy docstring format.
  */
-public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
+public class NumpyDocTypeProvider extends PyTypeProviderBase {
 
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
 
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
+
   static {
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex or bool");
@@ -116,15 +117,17 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
   @Nullable
   public static PyType getParameterType(PyFunction function, String parameterName) {
     NumpyDocString docString = NumpyDocString.forFunction(function, function);
-    DocStringParameter parameter = docString.getNamedParameter(parameterName);
+    if (docString != null) {
+      DocStringParameter parameter = docString.getNamedParameter(parameterName);
 
-    // If parameter name starts with "p_", and we failed to obtain it from docstring,
-    // try to obtain parameter named without such prefix.
-    if (parameter == null && parameterName.startsWith("p_")) {
-      parameter = docString.getNamedParameter(parameterName.substring(2));
-    }
-    if (parameter != null) {
-      return parseNumpyDocType(function, parameter.getType());
+      // If parameter name starts with "p_", and we failed to obtain it from docstring,
+      // try to obtain parameter named without such prefix.
+      if (parameter == null && parameterName.startsWith("p_")) {
+        parameter = docString.getNamedParameter(parameterName.substring(2));
+      }
+      if (parameter != null) {
+        return parseNumpyDocType(function, parameter.getType());
+      }
     }
     return null;
   }
@@ -141,7 +144,7 @@ public class NumpyDocstringTypeProvider extends PyTypeProviderBase {
   @Nullable
   public static PyType getReturnType(@NotNull PyFunction function, @NotNull PsiElement reference) {
     NumpyDocString docString = NumpyDocString.forFunction(function, reference);
-    return getReturnTypeFromDocString(docString);
+    return docString != null ? getReturnTypeFromDocString(docString) : null;
   }
 
   @Nullable

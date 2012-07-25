@@ -31,7 +31,8 @@ import java.util.Map;
 public class TypeInformationCache {
 
   private static final String CACHE_PATH = PathManager.getOptionsPath() + File.separator + "types_db.json";
-  private static final Type DATA_TYPE = new TypeToken<List<FunctionTypeInformation>>(){}.getType();
+  private static final Type DATA_TYPE = new TypeToken<List<FunctionTypeInformation>>() {
+  }.getType();
 
   private static final TypeInformationCache CACHE = new TypeInformationCache();
 
@@ -51,7 +52,7 @@ public class TypeInformationCache {
     }
   }
 
-  public FunctionTypeInformation getFunction(String name) {
+  public FunctionTypeInformation getFunction(@Nullable String name) {
     return myNamesToFunctions.get(name);
   }
 
@@ -75,12 +76,15 @@ public class TypeInformationCache {
       String json = gson.toJson(getAsList());
       writer.write(json);
       writer.flush();
-    } catch (IOException e) {
-    } finally {
+    }
+    catch (IOException e) {
+    }
+    finally {
       if (outputStream != null) {
         try {
           outputStream.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
         }
       }
     }
@@ -94,13 +98,16 @@ public class TypeInformationCache {
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
       Gson gson = new Gson();
       return gson.fromJson(reader, DATA_TYPE);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return null;
-    } finally {
+    }
+    finally {
       if (inputStream != null) {
         try {
           inputStream.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
         }
       }
     }

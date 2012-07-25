@@ -24,11 +24,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.pyscicomp.codeInsight.Utils;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,7 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
     resultSet.addElement(PrioritizedLookupElement.withPriority(builder, 1.0));
   }
 
-  private static void suggestVariantsForOrderedArgument(String functionName, int index, CompletionResultSet resultSet) {
+  private static void suggestVariantsForOrderedArgument(@Nullable String functionName, int index, CompletionResultSet resultSet) {
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     if (typeInformation != null) {
       for (String value : typeInformation.getPermissibleValuesForParameter(index)) {
@@ -61,7 +63,7 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
     }
   }
 
-  private static void suggestVariantsForAllNamedArguments(String functionName, CompletionResultSet resultSet) {
+  private static void suggestVariantsForAllNamedArguments(@Nullable String functionName, CompletionResultSet resultSet) {
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     Set<Pair<String, String>> permissibleArguments = typeInformation.getAllPermissibleArguments();
     for (Pair<String, String> argument : permissibleArguments) {
@@ -72,20 +74,16 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
   private static void addCompletionsForNamelessArgument(PsiElement element, CompletionResultSet resultSet) {
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression != null) {
-      Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-      if (calleeFunction instanceof PyFunction) {
-        PyFunction function = (PyFunction) calleeFunction;
-        String functionName = Utils.getQualifiedName(function, callExpression);
+      String functionName = PyFunctionUtils.getQualifiedNameOfCalleeFunction(callExpression);
 
-        // Determine for which argument completion is called and show hints for this argument
-        int editingArgumentIndex = ArrayUtil.indexOf(callExpression.getArguments(), element.getParent());
-        if (editingArgumentIndex != -1) {
-          suggestVariantsForOrderedArgument(functionName, editingArgumentIndex, resultSet);
-        }
-
-        // Anyway show hints for arguments passed by keywords
-        suggestVariantsForAllNamedArguments(functionName, resultSet);
+      // Determine for which argument completion is called and show hints for this argument
+      int editingArgumentIndex = ArrayUtil.indexOf(callExpression.getArguments(), element.getParent());
+      if (editingArgumentIndex != -1) {
+        suggestVariantsForOrderedArgument(functionName, editingArgumentIndex, resultSet);
       }
+
+      // Anyway show hints for arguments passed by keywords
+      suggestVariantsForAllNamedArguments(functionName, resultSet);
     }
   }
 
@@ -93,12 +91,13 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
     PyKeywordArgument keywordArgument = PsiTreeUtil.getParentOfType(element, PyKeywordArgument.class);
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(keywordArgument, PyCallExpression.class);
 
-    String functionName = Utils.getQualifiedNameOfCalleeFunction(callExpression);
+    String functionName = PyFunctionUtils.getQualifiedNameOfCalleeFunction(callExpression);
     if (functionName != null && keywordArgument != null) {
       suggestVariantsForNamedArgument(functionName, keywordArgument.getKeyword(), resultSet);
     }
   }
 
+  @SuppressWarnings("unchecked")
   public PermissibleArgumentCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement().withParents(PyReferenceExpression.class, PyArgumentList.class, PyCallExpression.class),

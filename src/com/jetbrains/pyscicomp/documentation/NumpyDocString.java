@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,10 +47,14 @@ public class NumpyDocString {
   private final List<DocStringParameter> myParameters = new ArrayList<DocStringParameter>();
   private final List<DocStringParameter> myReturns = new ArrayList<DocStringParameter>();
 
-  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines, @NotNull PsiElement reference) {
+  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines, @NotNull PsiElement reference)
+    throws NotNumpyDocStringException {
     myReference = reference;
     mySignature = signature;
     parseSections(lines);
+    if (myReturns.size() == 0 && myParameters.size() == 0) {
+      throw new NotNumpyDocStringException(signature);
+    }
   }
 
   public PsiElement getReference() {
@@ -85,7 +88,8 @@ public class NumpyDocString {
 
   /**
    * Returns PyFunction object for specified fully qualified name accessible from specified reference.
-   * @param redirect A fully qualified name of function that is redirected to.
+   *
+   * @param redirect  A fully qualified name of function that is redirected to.
    * @param reference An original reference element.
    * @return Resolved function or null if it was not resolved.
    */
@@ -122,7 +126,7 @@ public class NumpyDocString {
     return null;
   }
 
-  @NotNull
+  @Nullable
   private static NumpyDocString forFunction(@NotNull PyFunction function, @NotNull PsiElement reference, @Nullable String knownSignature) {
     String docString = function.getDocStringValue();
     if (docString == null && "__init__".equals(function.getName())) {
@@ -151,18 +155,24 @@ public class NumpyDocString {
           return forFunction(resolvedFunction, reference, knownSignature != null ? knownSignature : signature);
         }
       }
-      return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines, reference);
+      try {
+        return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines, reference);
+      }
+      catch (NotNumpyDocStringException e) {
+        return null;
+      }
     }
-    return new NumpyDocString(null, Collections.<String>emptyList(), reference);
+    return null;
   }
 
   /**
    * Returns NumpyDocString object confirming to Numpy-style formatted docstring of specified function.
-   * @param function Function containing docstring for which Numpy wrapper object is to be obtained.
+   *
+   * @param function  Function containing docstring for which Numpy wrapper object is to be obtained.
    * @param reference An original reference element to specified function.
    * @return Numpy docstring wrapper object for specified function.
    */
-  @NotNull
+  @Nullable
   public static NumpyDocString forFunction(@NotNull PyFunction function, @NotNull PsiElement reference) {
     return forFunction(function, reference, null);
   }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pyscicomp.codeInsight;
+package com.jetbrains.pyscicomp.codeInsight.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -21,13 +21,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,22 +51,19 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
     }
 
     private void checkArguments(@NotNull PyCallExpression callExpression) {
-      Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-      if (calleeFunction instanceof PyFunction) {
-        String functionName = Utils.getQualifiedName((PyFunction) calleeFunction, callExpression);
-        FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
-        if (typeInformation != null) {
-          List<ParameterTypeInformation> parameters = typeInformation.getParameters();
-          for (int i = 0; i < parameters.size(); i++) {
-            ParameterTypeInformation parameter = parameters.get(i);
-            Set<String> values = parameter.getPermissibleValues();
-            if (!values.isEmpty()) {
-              PyStringLiteralExpression passedString = callExpression.getArgument(i, parameter.getName(),
-                                                                                  PyStringLiteralExpression.class);
-              if (passedString != null) {
-                if (!containsIgnoreCase(values, passedString.getStringValue())) {
-                  registerProblem(passedString, "Argument must be one of " + values);
-                }
+      String functionName = PyFunctionUtils.getQualifiedNameOfCalleeFunction(callExpression);
+      FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+      if (typeInformation != null) {
+        List<ParameterTypeInformation> parameters = typeInformation.getParameters();
+        for (int i = 0; i < parameters.size(); i++) {
+          ParameterTypeInformation parameter = parameters.get(i);
+          Set<String> values = parameter.getPermissibleValues();
+          if (!values.isEmpty()) {
+            PyStringLiteralExpression passedString = callExpression.getArgument(i, parameter.getName(),
+                                                                                PyStringLiteralExpression.class);
+            if (passedString != null) {
+              if (!containsIgnoreCase(values, passedString.getStringValue())) {
+                registerProblem(passedString, "Argument must be one of " + values);
               }
             }
           }
@@ -90,7 +85,6 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
       checkArguments(node);
     }
   }
-
 
   @Nls
   @NotNull

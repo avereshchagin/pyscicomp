@@ -15,7 +15,7 @@
  */
 package com.jetbrains.pyscicomp.codeInsight.types;
 
-import com.jetbrains.pyscicomp.codeInsight.Utils;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -34,7 +34,7 @@ public class PredefinedTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
     if (function.isValid()) {
-      String qualifiedName = Utils.getQualifiedName(function, callSite);
+      String qualifiedName = PyFunctionUtils.getQualifiedName(function, callSite);
       FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(qualifiedName);
       if (typeInformation != null) {
         String returnType = typeInformation.getReturnType();
@@ -50,7 +50,7 @@ public class PredefinedTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getParameterType(PyNamedParameter parameter, PyFunction function, TypeEvalContext context) {
     if (function.isValid()) {
-      String qualifiedName = Utils.getQualifiedName(function, null);
+      String qualifiedName = PyFunctionUtils.getQualifiedName(function, null);
       FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(qualifiedName);
       String parameterName = parameter.getName();
       if (typeInformation != null && parameterName != null) {

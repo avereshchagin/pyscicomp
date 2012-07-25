@@ -71,7 +71,8 @@ public class EditParameterPanel extends JPanel {
 
     Editor editor = myEditorTextField.getEditor();
     if (editor instanceof EditorEx) {
-      ((EditorEx) editor).setHighlighter(new PythonEditorHighlighter(new DefaultColorsScheme(DefaultColorSchemesManager.getInstance()), null, null));
+      ((EditorEx) editor)
+        .setHighlighter(new PythonEditorHighlighter(new DefaultColorsScheme(DefaultColorSchemesManager.getInstance()), null, null));
     }
     add(myEditorTextField, constraints);
   }

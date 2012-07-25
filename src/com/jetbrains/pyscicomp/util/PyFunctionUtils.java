@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pyscicomp.codeInsight;
+package com.jetbrains.pyscicomp.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Utils {
+public class PyFunctionUtils {
 
-  private Utils() {
-
+  // Static usage only
+  private PyFunctionUtils() {
   }
 
   @NotNull
@@ -62,10 +62,6 @@ public class Utils {
       }
     }
     return null;
-  }
-
-  public static boolean isNumpyFunction(@NotNull PyFunction function, @Nullable PsiElement callSite) {
-    return getQualifiedName(function, callSite).startsWith("numpy.");
   }
 
   @Nullable
