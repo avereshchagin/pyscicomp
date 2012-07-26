@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -59,24 +58,6 @@ public class NumpyDocTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
     // 3 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float");
-  }
-
-  @NotNull
-  private static String cleanupOptional(@NotNull String typeString) {
-    int index = typeString.indexOf(", optional");
-    if (index >= 0) {
-      return typeString.substring(0, index);
-    }
-    return typeString;
-  }
-
-  @NotNull
-  private static List<String> getNumpyUnionType(@NotNull String typeString) {
-    Matcher matcher = NUMPY_UNION_PATTERN.matcher(typeString);
-    if (matcher.matches()) {
-      typeString = matcher.group(1);
-    }
-    return Arrays.asList(typeString.split(" *, *"));
   }
 
   @Nullable
@@ -136,34 +117,26 @@ public class NumpyDocTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
     if (callSite != null) {
-      return getReturnType(function, callSite);
+      NumpyDocString docString = NumpyDocString.forFunction(function, callSite);
+      if (docString != null) {
+        List<DocStringParameter> returns = docString.getReturns();
+        switch (returns.size()) {
+          case 0:
+            // Function returns nothing
+            return PyTypeParser.getTypeByName(callSite, "None");
+          case 1:
+            // Function returns single value
+            String typeString = returns.get(0).getType();
+            if (typeString != null) {
+              return parseNumpyDocType(callSite, typeString);
+            }
+            return null;
+          default:
+            // Function returns a tuple
+            return PyTypeParser.getTypeByName(callSite, "tuple");
+        }
+      }
     }
     return null;
-  }
-
-  @Nullable
-  public static PyType getReturnType(@NotNull PyFunction function, @NotNull PsiElement reference) {
-    NumpyDocString docString = NumpyDocString.forFunction(function, reference);
-    return docString != null ? getReturnTypeFromDocString(docString) : null;
-  }
-
-  @Nullable
-  public static PyType getReturnTypeFromDocString(@NotNull NumpyDocString docString) {
-    List<DocStringParameter> returns = docString.getReturns();
-    switch (returns.size()) {
-      case 0:
-        // Function returns nothing
-        return PyTypeParser.getTypeByName(docString.getReference(), "None");
-      case 1:
-        // Function returns single value
-        String typeString = returns.get(0).getType();
-        if (typeString != null) {
-          return parseNumpyDocType(docString.getReference(), typeString);
-        }
-        return null;
-      default:
-        // Function returns a tuple
-        return PyTypeParser.getTypeByName(docString.getReference(), "tuple");
-    }
   }
 }

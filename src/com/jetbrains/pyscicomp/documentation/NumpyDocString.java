@@ -43,24 +43,17 @@ public class NumpyDocString {
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
   private static final Pattern QUOTED_STRING_PATTERN = Pattern.compile("^(?:\\\"(.*)\\\")|(?:\\'(.*)\\')$");
 
-  private final PsiElement myReference;
-
   private final String mySignature;
   private final List<DocStringParameter> myParameters = new ArrayList<DocStringParameter>();
   private final List<DocStringParameter> myReturns = new ArrayList<DocStringParameter>();
 
-  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines, @NotNull PsiElement reference)
+  private NumpyDocString(@Nullable String signature, @NotNull List<String> lines)
     throws NotNumpyDocStringException {
-    myReference = reference;
     mySignature = signature;
     parseSections(lines);
     if (myReturns.size() == 0 && myParameters.size() == 0) {
       throw new NotNumpyDocStringException(signature);
     }
-  }
-
-  public PsiElement getReference() {
-    return myReference;
   }
 
   @Nullable
@@ -158,7 +151,7 @@ public class NumpyDocString {
         }
       }
       try {
-        return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines, reference);
+        return new NumpyDocString(knownSignature != null ? knownSignature : signature, lines);
       }
       catch (NotNumpyDocStringException e) {
         return null;

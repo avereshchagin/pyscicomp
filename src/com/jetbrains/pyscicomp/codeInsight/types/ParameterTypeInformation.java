@@ -24,9 +24,6 @@ public class ParameterTypeInformation {
   private String type;
   private final Set<String> permissibleValues = new HashSet<String>();
 
-  public ParameterTypeInformation() {
-  }
-
   public ParameterTypeInformation(String name, String type) {
     this.name = name;
     this.type = type;

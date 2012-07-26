@@ -34,9 +34,6 @@ public class FunctionTypeInformation {
   private String returnType;
   private List<ParameterTypeInformation> parameters = new ArrayList<ParameterTypeInformation>();
 
-  public FunctionTypeInformation() {
-  }
-
   public FunctionTypeInformation(String name, String returnType, List<ParameterTypeInformation> parameters) {
     this.name = name;
     this.returnType = returnType;

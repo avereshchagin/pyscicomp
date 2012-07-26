@@ -52,7 +52,7 @@ public class EditTypeInformationPanel extends JPanel {
     constraints.gridy = 0;
     constraints.gridwidth = 2;
     constraints.anchor = GridBagConstraints.LINE_START;
-    add(new JLabel(myFunction.toString()), constraints);
+    add(new JLabel(myFunction.getName()), constraints);
 
     constraints.gridwidth = 1;
 
