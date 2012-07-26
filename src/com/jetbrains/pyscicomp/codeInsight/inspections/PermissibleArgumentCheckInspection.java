@@ -21,10 +21,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
+import com.jetbrains.pyscicomp.documentation.DocStringParameter;
+import com.jetbrains.pyscicomp.documentation.NumpyDocString;
 import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,28 +53,45 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
       super(holder, session);
     }
 
-    private void checkArguments(@NotNull PyCallExpression callExpression) {
-      String functionName = PyFunctionUtils.getQualifiedNameOfCalleeFunction(callExpression);
-      FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
-      if (typeInformation != null) {
-        List<ParameterTypeInformation> parameters = typeInformation.getParameters();
-        for (int i = 0; i < parameters.size(); i++) {
-          ParameterTypeInformation parameter = parameters.get(i);
-          Set<String> values = parameter.getPermissibleValues();
-          if (!values.isEmpty()) {
-            PyStringLiteralExpression passedString = callExpression.getArgument(i, parameter.getName(),
-                                                                                PyStringLiteralExpression.class);
-            if (passedString != null) {
-              if (!containsIgnoreCase(values, passedString.getStringValue())) {
-                registerProblem(passedString, "Argument must be one of " + values);
-              }
-            }
+    private void checkValues(@NotNull Set<String> values, @NotNull PyCallExpression callExpression, int parameterIndex, String parameterName) {
+      if (!values.isEmpty()) {
+        PyStringLiteralExpression passedString = callExpression.getArgument(parameterIndex, parameterName,
+                                                                            PyStringLiteralExpression.class);
+        if (passedString != null) {
+          if (!containsIgnoreCase(values, passedString.getStringValue())) {
+            registerProblem(passedString, "Argument must be one of " + values);
           }
         }
       }
     }
 
-    private boolean containsIgnoreCase(@NotNull Collection<String> collection, @NotNull String value) {
+    private void checkArguments(@NotNull PyCallExpression callExpression) {
+      PyFunction function = PyFunctionUtils.getCalleeFunction(callExpression);
+      if (function != null) {
+        NumpyDocString docString = NumpyDocString.forFunction(function, callExpression);
+        if (docString != null) {
+          List<DocStringParameter> parameters = docString.getParameters();
+          for (int i = 0; i < parameters.size(); i++) {
+            DocStringParameter parameter = parameters.get(i);
+            Set<String> values = NumpyDocString.extractPermissibleArgumentsFromNumpyDocType(parameter.getType());
+            checkValues(values, callExpression, i, parameter.getName());
+          }
+        }
+
+        String functionName = PyFunctionUtils.getQualifiedName(function, callExpression);
+        FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
+        if (typeInformation != null) {
+          List<ParameterTypeInformation> parameters = typeInformation.getParameters();
+          for (int i = 0; i < parameters.size(); i++) {
+            ParameterTypeInformation parameter = parameters.get(i);
+            Set<String> values = parameter.getPermissibleValues();
+            checkValues(values, callExpression, i, parameter.getName());
+          }
+        }
+      }
+    }
+
+    private static boolean containsIgnoreCase(@NotNull Collection<String> collection, @NotNull String value) {
       for (String element : collection) {
         if (value.equalsIgnoreCase(element)) {
           return true;
