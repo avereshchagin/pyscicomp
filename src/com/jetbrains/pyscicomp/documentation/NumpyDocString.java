@@ -24,15 +24,14 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NumpyDocString {
 
   private static final Pattern LINE_SEPARATOR = Pattern.compile("\n|\r|\r\n");
-  private static final Pattern WHITESPACED_LINE = Pattern.compile("^[ \t]+$");
+  private static final Pattern WHITE_SPACED_LINE = Pattern.compile("^[ \t]+$");
   private static final Pattern ANY_INDENT = Pattern.compile("(^[ \t]*)[^ \t\r\n]");
   private static final Pattern HAS_INDENT = Pattern.compile("(^[ \t]+)[^ \t\r\n]");
   private static final Pattern SIGNATURE = Pattern.compile("^([\\w., ]+=)?\\s*[\\w\\.]+\\(.*\\)$");
@@ -40,6 +39,9 @@ public class NumpyDocString {
   private static final Pattern PARAMETER_WITH_TYPE = Pattern.compile("^(.+) : (.+)$");
   private static final Pattern PARAMETER_WITHOUT_TYPE = Pattern.compile("^([^ :,]+)$");
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
+
+  private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
+  private static final Pattern QUOTED_STRING_PATTERN = Pattern.compile("^(?:\\\"(.*)\\\")|(?:\\'(.*)\\')$");
 
   private final PsiElement myReference;
 
@@ -181,7 +183,7 @@ public class NumpyDocString {
   private static List<String> splitByLines(@NotNull String text) {
     List<String> lines = new ArrayList<String>();
     for (String line : LINE_SEPARATOR.split(text)) {
-      if (!line.isEmpty() && !WHITESPACED_LINE.matcher(line).matches()) {
+      if (!line.isEmpty() && !WHITE_SPACED_LINE.matcher(line).matches()) {
         lines.add(line);
       }
     }
@@ -289,5 +291,40 @@ public class NumpyDocString {
     if (builder != null) {
       parameters.add(builder.build());
     }
+  }
+
+  @NotNull
+  public static String cleanupOptional(@NotNull String typeString) {
+    int index = typeString.indexOf(", optional");
+    if (index >= 0) {
+      return typeString.substring(0, index);
+    }
+    return typeString;
+  }
+
+  @NotNull
+  public static List<String> getNumpyUnionType(@NotNull String typeString) {
+    Matcher matcher = NUMPY_UNION_PATTERN.matcher(typeString);
+    if (matcher.matches()) {
+      typeString = matcher.group(1);
+    }
+    return Arrays.asList(typeString.split(" *, *"));
+  }
+
+  @NotNull
+  public static Set<String> extractPermissibleArgumentsFromNumpyDocType(String typeString) {
+    List<String> elements = getNumpyUnionType(cleanupOptional(typeString));
+    Set<String> result = new LinkedHashSet<String>();
+    for (String element : elements) {
+      Matcher matcher = QUOTED_STRING_PATTERN.matcher(element);
+      if (matcher.matches()) {
+        if (matcher.group(1) != null) {
+          result.add(matcher.group(1));
+        } else if (matcher.group(2) != null) {
+          result.add(matcher.group(2));
+        }
+      }
+    }
+    return result;
   }
 }

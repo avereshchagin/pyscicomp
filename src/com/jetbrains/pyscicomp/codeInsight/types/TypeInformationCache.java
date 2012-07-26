@@ -52,6 +52,7 @@ public class TypeInformationCache {
     }
   }
 
+  @Nullable
   public FunctionTypeInformation getFunction(@Nullable String name) {
     return myNamesToFunctions.get(name);
   }

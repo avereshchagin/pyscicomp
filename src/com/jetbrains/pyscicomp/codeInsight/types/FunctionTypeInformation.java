@@ -15,7 +15,6 @@
  */
 package com.jetbrains.pyscicomp.codeInsight.types;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -25,7 +24,9 @@ import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class FunctionTypeInformation {
 
@@ -64,14 +65,6 @@ public class FunctionTypeInformation {
   }
 
   @Nullable
-  public ParameterTypeInformation getParameter(int index) {
-    if (index >= 0 && index < parameters.size()) {
-      return parameters.get(index);
-    }
-    return null;
-  }
-
-  @Nullable
   public ParameterTypeInformation getParameter(@NotNull String name) {
     for (ParameterTypeInformation parameter : parameters) {
       if (name.equals(parameter.getName())) {
@@ -88,36 +81,6 @@ public class FunctionTypeInformation {
       return parameter.getType();
     }
     return null;
-  }
-
-  @NotNull
-  public Set<String> getPermissibleValuesForParameter(int index) {
-    ParameterTypeInformation parameter = getParameter(index);
-    if (parameter != null) {
-      return Collections.unmodifiableSet(parameter.getPermissibleValues());
-    }
-    return Collections.emptySet();
-  }
-
-  @NotNull
-  public Set<String> getPermissibleValuesForParameter(String name) {
-    ParameterTypeInformation parameter = getParameter(name);
-    if (parameter != null) {
-      return Collections.unmodifiableSet(parameter.getPermissibleValues());
-    }
-    return Collections.emptySet();
-  }
-
-  @NotNull
-  public Set<Pair<String, String>> getAllPermissibleArguments() {
-    Set<Pair<String, String>> result = new HashSet<Pair<String, String>>();
-    for (ParameterTypeInformation parameter : parameters) {
-      Set<String> values = parameter.getPermissibleValues();
-      for (String value : values) {
-        result.add(new Pair<String, String>(parameter.getName(), value));
-      }
-    }
-    return result;
   }
 
   @NotNull

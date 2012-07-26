@@ -93,9 +93,9 @@ public class NumpyDocTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
-    typeString = cleanupOptional(typeString);
+    typeString = NumpyDocString.cleanupOptional(typeString);
     Set<PyType> types = new LinkedHashSet<PyType>();
-    for (String typeName : getNumpyUnionType(typeString)) {
+    for (String typeName : NumpyDocString.getNumpyUnionType(typeString)) {
       PyType parsedType = parseSingleNumpyDocType(anchor, typeName);
       if (parsedType != null) {
         types.add(parsedType);

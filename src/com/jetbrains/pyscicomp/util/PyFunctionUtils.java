@@ -53,11 +53,21 @@ public class PyFunctionUtils {
   }
 
   @Nullable
-  public static String getQualifiedNameOfCalleeFunction(@Nullable PyCallExpression callExpression) {
+  public static PyFunction getCalleeFunction(@Nullable PyCallExpression callExpression) {
     if (callExpression != null) {
       Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
       if (calleeFunction instanceof PyFunction) {
-        PyFunction function = (PyFunction) calleeFunction;
+        return (PyFunction) calleeFunction;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getQualifiedNameOfCalleeFunction(@Nullable PyCallExpression callExpression) {
+    if (callExpression != null) {
+      PyFunction function = getCalleeFunction(callExpression);
+      if (function != null) {
         return getQualifiedName(function, callExpression);
       }
     }
