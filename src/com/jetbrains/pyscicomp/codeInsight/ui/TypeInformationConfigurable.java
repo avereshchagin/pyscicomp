@@ -20,18 +20,25 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.hash.HashSet;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.util.ArrayList;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class TypeInformationConfigurable implements Configurable {
 
@@ -41,6 +48,75 @@ public class TypeInformationConfigurable implements Configurable {
   private EditTypeInformationPanel myEditTypeInformationPanel = null;
 
   private final List<FunctionTypeInformation> pendingModifications = new ArrayList<FunctionTypeInformation>();
+
+  private final FunctionsListModel myListModel = new FunctionsListModel();
+  private final JTextField myFilterTextField = new JTextField();
+  private final JCheckBox mySortCheckBox = new JCheckBox("Exactly matches", false);
+
+  private static class FunctionsListModel implements ListModel {
+
+    private List<FunctionTypeInformation> myDisplayedFunctions;
+    private final Set<ListDataListener> myListeners = new HashSet<ListDataListener>();
+    private int myOldSize = 0;
+
+    private FunctionsListModel() {
+      applyFilter(null, false);
+    }
+
+    @Override
+    public int getSize() {
+      return myDisplayedFunctions.size();
+    }
+
+    @Override
+    public Object getElementAt(int index) {
+      return myDisplayedFunctions.get(index);
+    }
+
+    @Override
+    public void addListDataListener(ListDataListener l) {
+      myListeners.add(l);
+    }
+
+    @Override
+    public void removeListDataListener(ListDataListener l) {
+      myListeners.remove(l);
+    }
+
+    private void sort() {
+      Collections.sort(myDisplayedFunctions, new Comparator<FunctionTypeInformation>() {
+        @Override
+        public int compare(FunctionTypeInformation o1, FunctionTypeInformation o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+    }
+
+    private void applyFilter(@Nullable Pattern filterPattern, boolean exactlyMatches) {
+      List<FunctionTypeInformation> functions = TypeInformationCache.getInstance().getAsList();
+      if (filterPattern == null) {
+        myDisplayedFunctions = functions;
+      } else {
+        myDisplayedFunctions.clear();
+        for (FunctionTypeInformation function : functions) {
+          Matcher matcher = filterPattern.matcher(function.getName());
+          if ((exactlyMatches && matcher.matches()) || (!exactlyMatches && matcher.find())) {
+            myDisplayedFunctions.add(function);
+          }
+        }
+      }
+      sort();
+      for (ListDataListener listener : myListeners) {
+        if (myOldSize > 0) {
+          listener.intervalRemoved(new ListDataEvent(this, ListDataEvent.INTERVAL_REMOVED, 0, myOldSize - 1));
+        }
+        if (!myDisplayedFunctions.isEmpty()) {
+          listener.intervalAdded(new ListDataEvent(this, ListDataEvent.INTERVAL_ADDED, 0, myDisplayedFunctions.size() - 1));
+        }
+      }
+      myOldSize = myDisplayedFunctions.size();
+    }
+  }
 
   @Nls
   @Override
@@ -53,10 +129,51 @@ public class TypeInformationConfigurable implements Configurable {
     return null;
   }
 
+  private void onFilterChanged() {
+    String filterText = myFilterTextField.getText();
+    boolean exactlyMatches = mySortCheckBox.isSelected();
+    if (filterText.isEmpty()) {
+      myListModel.applyFilter(null, exactlyMatches);
+    } else {
+      try {
+        Pattern pattern = Pattern.compile(filterText);
+        myFilterTextField.setForeground(Color.BLACK);
+        myListModel.applyFilter(pattern, exactlyMatches);
+      } catch (PatternSyntaxException ex) {
+        myFilterTextField.setForeground(Color.RED);
+      }
+    }
+  }
+
+  private JComponent createControlsPanel() {
+    JPanel controlsPanel = new JPanel(new BorderLayout());
+    controlsPanel.add(new JLabel("Filter with regular expression: "), BorderLayout.WEST);
+
+    myFilterTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        onFilterChanged();
+      }
+    });
+    controlsPanel.add(myFilterTextField, BorderLayout.CENTER);
+
+    mySortCheckBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        onFilterChanged();
+      }
+    });
+    controlsPanel.add(mySortCheckBox, BorderLayout.EAST);
+
+    return controlsPanel;
+  }
+
   @Override
   public JComponent createComponent() {
-    final JBList list = new JBList(TypeInformationCache.getInstance().getAsList());
+    JPanel firstComponent = new JPanel(new BorderLayout());
+    firstComponent.add(createControlsPanel(), BorderLayout.NORTH);
 
+    final JBList list = new JBList(myListModel);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(list).disableUpDownActions()
@@ -73,8 +190,10 @@ public class TypeInformationConfigurable implements Configurable {
         }
       });
 
+    firstComponent.add(decorator.createPanel(), BorderLayout.CENTER);
+
     final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(decorator.createPanel());
+    splitter.setFirstComponent(firstComponent);
     splitter.setSecondComponent(new JPanel());
 
     list.addListSelectionListener(new ListSelectionListener() {
