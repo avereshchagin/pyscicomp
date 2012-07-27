@@ -17,46 +17,41 @@ package com.jetbrains.pyscicomp.codeInsight.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
-import com.jetbrains.pyscicomp.codeInsight.types.TypeInformationCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
-public class EditTypeInformationDialog extends DialogWrapper {
+public class EditStringValueDialog extends DialogWrapper {
 
-  private static final String TITLE = "Edit Type Information";
+  private final String myTitle;
+  private final JTextField myTextField;
 
-  private final FunctionTypeInformation myFunction;
-  private final Project myProject;
-  private EditTypeInformationPanel myEditTypeInformationPanel;
-
-  public EditTypeInformationDialog(@Nullable Project project, @NotNull FunctionTypeInformation typeInformation) {
+  public EditStringValueDialog(@Nullable Project project, @NotNull String title, @NotNull String currentValue) {
     super(project, true);
-    myFunction = typeInformation;
-    myProject = project;
-
+    myTitle = title;
+    myTextField = new JTextField(currentValue);
     init();
   }
 
   protected void init() {
     super.init();
-    setTitle(TITLE);
+    setTitle(myTitle);
+    myTextField.setPreferredSize(new Dimension(200, 25));
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    myEditTypeInformationPanel = new EditTypeInformationPanel(myProject, myFunction);
-    return myEditTypeInformationPanel;
+    return myTextField;
   }
 
   @Override
-  protected void doOKAction() {
-    FunctionTypeInformation typeInformation = myEditTypeInformationPanel.getEditResult();
-    TypeInformationCache cache = TypeInformationCache.getInstance();
-    cache.putFunction(typeInformation, true);
+  public JComponent getPreferredFocusedComponent() {
+    return myTextField;
+  }
 
-    super.doOKAction();
+  public String getEditResult() {
+    return myTextField.getText();
   }
 }

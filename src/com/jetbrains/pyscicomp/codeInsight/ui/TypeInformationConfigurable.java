@@ -83,7 +83,7 @@ public class TypeInformationConfigurable implements Configurable {
         Object obj = list.getSelectedValue();
         if (obj instanceof FunctionTypeInformation) {
           checkModification();
-          myEditTypeInformationPanel = new EditTypeInformationPanel((FunctionTypeInformation) obj);
+          myEditTypeInformationPanel = new EditTypeInformationPanel(null, (FunctionTypeInformation) obj);
           splitter.setSecondComponent(myEditTypeInformationPanel);
         }
       }

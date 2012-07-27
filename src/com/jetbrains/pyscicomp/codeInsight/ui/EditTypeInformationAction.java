@@ -23,10 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
+import com.jetbrains.pyscicomp.util.PyFunctionUtils;
 import com.jetbrains.python.psi.PyFunction;
 
 public class EditTypeInformationAction extends AnAction {
@@ -43,10 +43,9 @@ public class EditTypeInformationAction extends AnAction {
         if (file != null) {
           PsiReference referenceAt = file.findReferenceAt(offset);
           if (referenceAt != null) {
-            PsiElement resolved = referenceAt.resolve();
-            if (resolved instanceof PyFunction) {
-              FunctionTypeInformation typeInformation =
-                FunctionTypeInformation.fromPyFunction((PyFunction) resolved, referenceAt.getElement());
+            PyFunction function = PyFunctionUtils.extractCalleeFunction(referenceAt.getElement());
+            if (function != null) {
+              FunctionTypeInformation typeInformation = FunctionTypeInformation.forPyFunction(function, referenceAt.getElement());
               new EditTypeInformationDialog(project, typeInformation).show();
             }
           }

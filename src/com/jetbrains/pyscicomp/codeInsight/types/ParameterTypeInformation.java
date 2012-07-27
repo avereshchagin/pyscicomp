@@ -15,18 +15,21 @@
  */
 package com.jetbrains.pyscicomp.codeInsight.types;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ParameterTypeInformation {
 
   private String name;
   private String type;
-  private final Set<String> permissibleValues = new HashSet<String>();
+  private final Set<String> permissibleValues;
 
-  public ParameterTypeInformation(String name, String type) {
+  public ParameterTypeInformation(String name, String type, Collection<String> permissibleValues) {
     this.name = name;
     this.type = type;
+    this.permissibleValues = new LinkedHashSet<String>(permissibleValues);
   }
 
   public String getType() {
@@ -38,6 +41,6 @@ public class ParameterTypeInformation {
   }
 
   public Set<String> getPermissibleValues() {
-    return permissibleValues;
+    return Collections.unmodifiableSet(permissibleValues);
   }
 }

@@ -17,10 +17,12 @@ package com.jetbrains.pyscicomp.codeInsight.ui;
 
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +31,7 @@ import java.util.List;
 
 public class EditTypeInformationPanel extends JPanel {
 
+  private static final String FUNCTION_LABEL = "Function: ";
   private static final String RETURN_TYPE_LABEL = "Return type:";
 
   private final FunctionTypeInformation myFunction;
@@ -36,9 +39,11 @@ public class EditTypeInformationPanel extends JPanel {
   private EditorTextField myReturnTypeField;
   private final List<EditParameterPanel> myParameterFields = new ArrayList<EditParameterPanel>();
   private boolean myModified = false;
+  private final Project myProject;
 
-  public EditTypeInformationPanel(FunctionTypeInformation function) {
+  public EditTypeInformationPanel(@Nullable Project project, FunctionTypeInformation function) {
     super(new GridBagLayout());
+    myProject = project;
     myFunction = function;
 
     initComponents();
@@ -52,20 +57,22 @@ public class EditTypeInformationPanel extends JPanel {
     constraints.gridy = 0;
     constraints.gridwidth = 2;
     constraints.anchor = GridBagConstraints.LINE_START;
-    add(new JLabel(myFunction.getName()), constraints);
+    add(new JLabel(FUNCTION_LABEL + myFunction.getName()), constraints);
 
     constraints.gridwidth = 1;
 
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.anchor = GridBagConstraints.LINE_END;
-    add(new JLabel(RETURN_TYPE_LABEL), constraints);
+    JLabel returnTypeLabel = new JLabel(RETURN_TYPE_LABEL);
+    returnTypeLabel.setPreferredSize(new Dimension(100, 25));
+    add(returnTypeLabel, constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 1;
     constraints.anchor = GridBagConstraints.LINE_START;
 
-    myReturnTypeField = new EditorTextField(myFunction.getReturnType(), null, PythonFileType.INSTANCE);
+    myReturnTypeField = new EditorTextField(myFunction.getReturnType(), myProject, PythonFileType.INSTANCE);
     myReturnTypeField.setPreferredSize(new Dimension(250, 25));
     add(myReturnTypeField, constraints);
     myReturnTypeField.addDocumentListener(new DocumentAdapter() {
@@ -80,7 +87,7 @@ public class EditTypeInformationPanel extends JPanel {
       constraints.gridx = 0;
       constraints.gridy = y;
       constraints.gridwidth = 2;
-      EditParameterPanel parameterPanel = new EditParameterPanel(parameter);
+      EditParameterPanel parameterPanel = new EditParameterPanel(myProject, parameter);
       myParameterFields.add(parameterPanel);
       add(parameterPanel, constraints);
       y++;

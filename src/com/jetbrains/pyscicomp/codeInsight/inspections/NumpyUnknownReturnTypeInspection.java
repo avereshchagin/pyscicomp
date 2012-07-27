@@ -27,13 +27,13 @@ import com.jetbrains.pyscicomp.codeInsight.types.FunctionTypeInformation;
 import com.jetbrains.pyscicomp.codeInsight.ui.EditTypeInformationDialog;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class NumpyUnknownReturnTypeInspection extends PyInspection {
 
@@ -61,13 +61,8 @@ public class NumpyUnknownReturnTypeInspection extends PyInspection {
         if (resolved instanceof PyFunction) {
           PyFunction function = (PyFunction) resolved;
           if (function.isValid() && function.getReturnType(myTypeEvalContext, referenceExpression) == null) {
-
-            List<String> parameters = new ArrayList<String>();
-            for (PyParameter parameter : function.getParameterList().getParameters()) {
-              parameters.add(parameter.getName());
-            }
             registerProblem(node, "Unknown return type",
-                            new AddTypeInformationFix(FunctionTypeInformation.fromPyFunction(function, referenceExpression)));
+                            new AddTypeInformationFix(FunctionTypeInformation.forPyFunction(function, referenceExpression)));
           }
         }
       }

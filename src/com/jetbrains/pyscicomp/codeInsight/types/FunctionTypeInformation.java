@@ -40,13 +40,20 @@ public class FunctionTypeInformation {
     this.parameters = parameters;
   }
 
-  public static FunctionTypeInformation fromPyFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
+  public static FunctionTypeInformation forPyFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
     String functionName = PyFunctionUtils.getQualifiedName(function, reference);
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     if (typeInformation == null) {
+      int start = 0;
+      if (function.getContainingClass() != null) {
+        // Function is a class method, so ignore 'self' parameter
+        start = 1;
+      }
+
       List<ParameterTypeInformation> parametersList = new ArrayList<ParameterTypeInformation>();
-      for (PyParameter parameter : function.getParameterList().getParameters()) {
-        parametersList.add(new ParameterTypeInformation(parameter.getName(), ""));
+      PyParameter[] parameters = function.getParameterList().getParameters();
+      for (int i = start; i < parameters.length; i++) {
+        parametersList.add(new ParameterTypeInformation(parameters[i].getName(), "", Collections.<String>emptySet()));
       }
       typeInformation = new FunctionTypeInformation(functionName, "", parametersList);
     }

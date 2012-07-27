@@ -15,19 +15,19 @@
  */
 package com.jetbrains.pyscicomp.codeInsight.ui;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.jetbrains.pyscicomp.codeInsight.types.ParameterTypeInformation;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.lexer.PythonEditorHighlighter;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collection;
 
 public class EditParameterPanel extends JPanel {
 
@@ -35,20 +35,24 @@ public class EditParameterPanel extends JPanel {
   private static final int TEXT_FIELD_WIDTH = 250;
   private static final int HEIGHT = 25;
 
-  private ParameterTypeInformation myParameter;
+  private final ParameterTypeInformation myParameter;
   private EditorTextField myEditorTextField;
   private boolean myModified = false;
+  private final Project myProject;
+  private Collection<String> myPermissibleValues;
 
-  public EditParameterPanel(ParameterTypeInformation parameter) {
+  public EditParameterPanel(@Nullable Project project, ParameterTypeInformation parameter) {
     super(new GridBagLayout());
     myParameter = parameter;
+    myProject = project;
+    myPermissibleValues = parameter.getPermissibleValues();
 
     initComponents();
   }
 
   private void initComponents() {
     GridBagConstraints constraints = new GridBagConstraints();
-    constraints.insets = new Insets(0, 0, 0, 0);
+    constraints.insets = new Insets(0, 0, 0, 5);
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.gridwidth = 1;
@@ -60,7 +64,7 @@ public class EditParameterPanel extends JPanel {
 
     constraints.gridx = 1;
     constraints.anchor = GridBagConstraints.LINE_START;
-    myEditorTextField = new EditorTextField(myParameter.getType(), null, PythonFileType.INSTANCE);
+    myEditorTextField = new EditorTextField(myParameter.getType(), myProject, PythonFileType.INSTANCE);
     myEditorTextField.setPreferredSize(new Dimension(TEXT_FIELD_WIDTH, HEIGHT));
     myEditorTextField.addDocumentListener(new DocumentAdapter() {
       @Override
@@ -68,17 +72,29 @@ public class EditParameterPanel extends JPanel {
         myModified = true;
       }
     });
-
-    Editor editor = myEditorTextField.getEditor();
-    if (editor instanceof EditorEx) {
-      ((EditorEx) editor)
-        .setHighlighter(new PythonEditorHighlighter(new DefaultColorsScheme(DefaultColorSchemesManager.getInstance()), null, null));
-    }
     add(myEditorTextField, constraints);
+
+    constraints.gridx = 2;
+    JButton button = new JButton("Edit values...");
+    button.setPreferredSize(new Dimension(120, HEIGHT));
+    button.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        EditPermissibleValuesDialog dialog = new EditPermissibleValuesDialog(myProject, myPermissibleValues);
+        dialog.show();
+        if (dialog.isOK()) {
+          myPermissibleValues = dialog.getEditResult();
+          myModified = true;
+        }
+      }
+    });
+    add(button, constraints);
+
+    myEditorTextField.setPreferredSize(new Dimension(TEXT_FIELD_WIDTH, HEIGHT));
   }
 
   public ParameterTypeInformation getEditResult() {
-    return new ParameterTypeInformation(myParameter.getName(), myEditorTextField.getText());
+    return new ParameterTypeInformation(myParameter.getName(), myEditorTextField.getText(), myPermissibleValues);
   }
 
   public boolean isModified() {
