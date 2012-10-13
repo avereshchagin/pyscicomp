@@ -18,6 +18,6 @@ package com.jetbrains.pyscicomp.documentation;
 public class NotNumpyDocStringException extends Exception {
 
   public NotNumpyDocStringException(String signature) {
-    super("Function " + signature + " is not containing docstring of Numpy format.");
+    super("Function " + signature + " does not contain docstring of Numpy format.");
   }
 }

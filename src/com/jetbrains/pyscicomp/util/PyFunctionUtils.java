@@ -15,41 +15,15 @@
  */
 package com.jetbrains.pyscicomp.util;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PyFunctionUtils {
 
   // Static usage only
   private PyFunctionUtils() {
-  }
-
-  @NotNull
-  public static String getQualifiedName(@NotNull PyFunction function, @Nullable PsiElement callSite) {
-    assert function.isValid();
-    List<String> result = new ArrayList<String>();
-    PyClass containingClass = function.getContainingClass();
-    VirtualFile virtualFile = function.getContainingFile().getVirtualFile();
-    if (virtualFile != null) {
-      String module = ResolveImportUtil.findShortestImportableName(callSite != null ? callSite : function, virtualFile);
-      if (module != null) {
-        result.add(module);
-      }
-    }
-    if (containingClass != null) {
-      result.add(containingClass.getName());
-    }
-    result.add(function.getName());
-    return StringUtil.join(result, ".");
   }
 
   @Nullable
@@ -58,17 +32,6 @@ public class PyFunctionUtils {
       Callable calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
       if (calleeFunction instanceof PyFunction) {
         return (PyFunction) calleeFunction;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String getQualifiedNameOfCalleeFunction(@Nullable PyCallExpression callExpression) {
-    if (callExpression != null) {
-      PyFunction function = getCalleeFunction(callExpression);
-      if (function != null) {
-        return getQualifiedName(function, callExpression);
       }
     }
     return null;

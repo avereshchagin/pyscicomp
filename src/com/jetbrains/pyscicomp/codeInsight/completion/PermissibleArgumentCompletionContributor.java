@@ -53,7 +53,7 @@ public class PermissibleArgumentCompletionContributor extends CompletionContribu
                                                              @NotNull PermissibleArgumentsHandler handler) {
     Set<String> suggestions = new LinkedHashSet<String>();
 
-    String functionName = PyFunctionUtils.getQualifiedName(function, reference);
+    String functionName = function.getQualifiedName();
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     if (typeInformation != null) {
       suggestions.addAll(handler.handleTypeInformation(typeInformation));

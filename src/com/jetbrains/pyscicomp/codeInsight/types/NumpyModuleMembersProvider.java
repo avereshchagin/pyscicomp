@@ -17,6 +17,7 @@ package com.jetbrains.pyscicomp.codeInsight.types;
 
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.resolve.PointInImport;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
@@ -33,7 +34,7 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   private static final String TARGET_TYPE = "numpy.core.multiarray.dtype";
 
   @Override
-  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, ResolveImportUtil.PointInImport point) {
+  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
     if (qName.equals("numpy")) {
       List<PyDynamicMember> members = new ArrayList<PyDynamicMember>();
       for (String type : NUMPY_NUMERIC_TYPES) {

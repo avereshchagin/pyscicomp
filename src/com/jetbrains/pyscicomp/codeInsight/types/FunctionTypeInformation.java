@@ -41,7 +41,7 @@ public class FunctionTypeInformation {
   }
 
   public static FunctionTypeInformation forPyFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
-    String functionName = PyFunctionUtils.getQualifiedName(function, reference);
+    String functionName = function.getQualifiedName();
     FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
     if (typeInformation == null) {
       int start = 0;

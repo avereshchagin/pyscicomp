@@ -92,11 +92,11 @@ public class NumpyDocString {
   private static PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull final PsiElement reference) {
     PyQualifiedName qualifiedName = PyQualifiedName.fromDottedString(redirect);
     final String functionName = qualifiedName.getLastComponent();
-    List<PsiFileSystemItem> items = ResolveImportUtil.resolveModule(qualifiedName.removeLastComponent(),
+    List<PsiElement> elements = ResolveImportUtil.resolveModule(qualifiedName.removeLastComponent(),
                                                                     reference.getContainingFile(), true, 0);
-    for (PsiFileSystemItem item : items) {
+    for (PsiElement element : elements) {
       final PyFunction[] function = {null};
-      item.accept(new PyElementVisitor() {
+      element.accept(new PyElementVisitor() {
         @Override
         public void visitDirectory(PsiDirectory dir) {
           PsiElement element = PyUtil.getPackageElement(dir);

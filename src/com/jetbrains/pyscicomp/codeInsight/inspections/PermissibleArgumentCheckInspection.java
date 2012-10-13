@@ -78,7 +78,7 @@ public class PermissibleArgumentCheckInspection extends PyInspection {
           }
         }
 
-        String functionName = PyFunctionUtils.getQualifiedName(function, callExpression);
+        String functionName = function.getQualifiedName();
         FunctionTypeInformation typeInformation = TypeInformationCache.getInstance().getFunction(functionName);
         if (typeInformation != null) {
           List<ParameterTypeInformation> parameters = typeInformation.getParameters();

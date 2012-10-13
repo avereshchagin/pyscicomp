@@ -1,6 +1,6 @@
 <idea-plugin version="2">
   <id>com.jetbrains.pyscicomp</id>
-  <name>Python Scientific Compuation</name>
+  <name>Python Scientific Computation</name>
   <description>Support for Numpy library</description>
   <version>1.0</version>
   <depends>com.intellij.modules.python</depends>
